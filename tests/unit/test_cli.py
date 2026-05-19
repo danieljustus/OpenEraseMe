@@ -1,6 +1,7 @@
 """Basic CLI smoke tests."""
 
 from typer.testing import CliRunner
+
 from openeraseme.cli import app
 
 runner = CliRunner()

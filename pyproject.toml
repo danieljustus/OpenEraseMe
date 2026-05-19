@@ -26,7 +26,9 @@ dependencies = [
     "keyring>=24.0.0",
     "cryptography>=42.0.0",
     "jinja2>=3.1.0",
+    "jsonschema>=4.20.0",
     "structlog>=24.0.0",
+    "email-validator>=2.1.0",
 ]
 
 [project.optional-dependencies]
