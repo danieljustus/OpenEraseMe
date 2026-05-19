@@ -2,10 +2,9 @@ from __future__ import annotations
 
 import asyncio
 import json
+from typing import cast
 
 import typer
-
-from typing import cast
 
 from openeraseme.adapters.web.playwright_runner import (
     PlaywrightRunnerError,
