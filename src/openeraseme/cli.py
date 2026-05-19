@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import time
 from datetime import datetime
 from enum import StrEnum
@@ -435,9 +436,6 @@ def poll_inbox(
     host: str = typer.Option("imap.gmail.com", "--host", help="IMAP server"),
     port: int = typer.Option(993, "--port", help="IMAP port"),
     username: str = typer.Option(..., "--username", prompt=True, help="IMAP username"),
-    password: str = typer.Option(
-        ..., "--password", prompt=True, hide_input=True, help="IMAP password"
-    ),
     since_days: int = typer.Option(1, "--since", help="Look back N days"),
     ssl: bool = typer.Option(True, "--ssl/--no-ssl"),
     campaign_id: str = typer.Option(None, "--campaign", help="Campaign to match replies against"),
@@ -454,6 +452,10 @@ def poll_inbox(
     from openeraseme.core.orchestrator import submit_inbox_reply
 
     init_db()
+
+    password = os.environ.get("IMAP_PASSWORD") or typer.prompt(
+        "IMAP password", hide_input=True
+    )
 
     try:
         messages = _poll(
