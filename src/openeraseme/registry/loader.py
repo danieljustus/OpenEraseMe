@@ -45,6 +45,14 @@ def load_broker_yaml(path: str | Path) -> Broker:
     return Broker.model_validate(data)
 
 
+def load_broker(broker_id: str) -> Broker:
+    for b in load_all_brokers():
+        if b.id == broker_id:
+            return b
+    msg = f"Broker '{broker_id}' not found in registry"
+    raise FileNotFoundError(msg)
+
+
 def load_all_brokers(
     registry_dir: str | Path | None = None,
     jurisdiction: str | None = None,

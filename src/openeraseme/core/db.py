@@ -106,6 +106,17 @@ def init_db(path: str | None = None) -> Path:
             classifier_confidence REAL,
             llm_summary     TEXT
         );
+
+        CREATE TABLE IF NOT EXISTS reply_drafts (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            reply_id        INTEGER NOT NULL REFERENCES inbox_replies(id),
+            request_id      INTEGER REFERENCES removal_requests(id),
+            draft_body      TEXT NOT NULL,
+            subject         TEXT NOT NULL DEFAULT '',
+            created_at      TIMESTAMP NOT NULL DEFAULT (datetime('now')),
+            sent_at         TIMESTAMP,
+            account         TEXT
+        );
     """)
     conn.commit()
     return db_file

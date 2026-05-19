@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import json
 import os
 import tempfile
-from unittest.mock import patch
 
 import pytest
 from typer.testing import CliRunner
@@ -49,7 +47,7 @@ class TestPlanCampaign:
         assert result["planned"] <= 2
 
     def test_plan_requests_have_state(self):
-        result = plan_campaign(campaign_id="test-state", max_brokers=3)
+        plan_campaign(campaign_id="test-state", max_brokers=3)
         requests = list_removal_requests(campaign_id="test-state")
         assert all(r.get("current_status") == "PLANNED" for r in requests)
 
