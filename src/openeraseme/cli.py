@@ -3,6 +3,7 @@ from __future__ import annotations
 import time
 from datetime import datetime
 from enum import StrEnum
+from pathlib import Path
 
 import typer
 
@@ -1231,6 +1232,306 @@ def solve_captcha_cmd(
 
     typer.echo(f"Captcha solved (task: {result.task_id})")
     typer.echo(f"Token: {result.token[:50]}...")
+
+
+# ---------------------------------------------------------------------------
+# generate-scheduler — platform-specific scheduling configs
+# ---------------------------------------------------------------------------
+
+
+@app.command(name="generate-scheduler")
+def generate_scheduler_cmd(
+    ctx: typer.Context,
+    platform: str = typer.Option(
+        "", "--platform", help="Target platform: cron, launchd, systemd (auto-detect if empty)"
+    ),
+    output_dir: str = typer.Option(
+        "./schedules", "--output-dir", help="Output directory for generated files"
+    ),
+    tick_hour: int = typer.Option(10, "--tick-hour", help="Hour for daily tick (0-23)"),
+    tick_minute: int = typer.Option(0, "--tick-minute", help="Minute for daily tick (0-59)"),
+    poll_hours: str = typer.Option(
+        "8,12,16,20", "--poll-hours", help="Comma-separated hours for poll-inbox"
+    ),
+    project_dir: str = typer.Option("", "--project-dir", help="Project directory"),
+    openeraseme_bin: str = typer.Option("", "--bin", help="Path to openeraseme binary"),
+    venv_activate: str = typer.Option("", "--venv", help="Path to virtualenv activate script"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Preview files without writing"),
+) -> None:
+    """Generate platform-specific scheduler configurations."""
+    from openeraseme.core.scheduler import (
+        generate_scheduler_configs,
+        write_scheduler_files,
+    )
+
+    poll_hours_list = [
+        int(h.strip()) for h in poll_hours.split(",") if h.strip()
+    ]
+
+    try:
+        files = generate_scheduler_configs(
+            platform_name=platform,
+            output_dir=output_dir,
+            tick_hour=tick_hour,
+            tick_minute=tick_minute,
+            poll_hours=poll_hours_list,
+            project_dir=project_dir,
+            openeraseme_bin=openeraseme_bin,
+            venv_activate=venv_activate,
+        )
+    except ValueError as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(1) from e
+
+    written = write_scheduler_files(files, output_dir, dry_run=dry_run)
+
+    if ctx.obj.get("output") == "json":
+        import json as _json
+
+        typer.echo(
+            _json.dumps(
+                {
+                    "platform": platform or "auto",
+                    "output_dir": output_dir,
+                    "files": written,
+                    "dry_run": dry_run,
+                },
+                indent=2,
+            )
+        )
+        return
+
+    if dry_run:
+        typer.echo(f"[dry-run] Would generate {len(files)} file(s) for {platform or 'auto'}:")
+    else:
+        typer.echo(f"Generated {len(written)} file(s) in {output_dir}:")
+    for f in written:
+        typer.echo(f"  {f}")
+
+
+# ---------------------------------------------------------------------------
+# schedule — install / uninstall / status for scheduler
+# ---------------------------------------------------------------------------
+
+schedule_app = typer.Typer(
+    name="schedule",
+    help="Manage scheduler configuration (install, uninstall, status)",
+    no_args_is_help=True,
+)
+app.add_typer(schedule_app)
+
+
+@schedule_app.command()
+def schedule_install(
+    ctx: typer.Context,
+    platform: str = typer.Option(
+        "", "--platform", help="Target platform: cron, launchd, systemd (auto-detect)"
+    ),
+    tick_hour: int = typer.Option(10, "--tick-hour", help="Hour for daily tick (0-23)"),
+    tick_minute: int = typer.Option(0, "--tick-minute", help="Minute for daily tick (0-59)"),
+    yes: bool = typer.Option(False, "--yes", help="Skip confirmation prompt"),
+) -> None:
+    """Generate and install scheduler config for the current OS."""
+    from openeraseme.core.scheduler import (
+        detect_platform,
+        generate_scheduler_configs,
+        write_scheduler_files,
+    )
+
+    plat = platform or detect_platform()
+    output_dir = "./schedules"
+
+    if not yes:
+        typer.echo(f"Platform detected: {plat}")
+        typer.echo(f"Output directory: {output_dir}")
+        typer.echo("Files will be generated and install helpers will be placed in the output dir.")
+        typer.confirm("Continue?", abort=True)
+
+    files = generate_scheduler_configs(
+        platform_name=plat,
+        output_dir=output_dir,
+        tick_hour=tick_hour,
+        tick_minute=tick_minute,
+    )
+    written = write_scheduler_files(files, output_dir)
+
+    if ctx.obj.get("output") == "json":
+        import json as _json
+
+        typer.echo(
+            _json.dumps(
+                {
+                    "platform": plat,
+                    "output_dir": output_dir,
+                    "files": written,
+                },
+                indent=2,
+            )
+        )
+        return
+
+    typer.echo(f"Schedule configs generated for {plat} in {output_dir}.")
+    typer.echo("")
+    typer.echo("To install:")
+    suffix = "   # (installs crontab entries)" if plat == "cron" else ""
+    typer.echo(f"  bash {output_dir}/install.sh{suffix}")
+    typer.echo("")
+    typer.echo("To uninstall:")
+    typer.echo(f"  bash {output_dir}/uninstall.sh")
+
+
+@schedule_app.command(name="uninstall")
+def schedule_uninstall(
+    ctx: typer.Context,
+    platform: str = typer.Option(
+        "", "--platform", help="Target platform: cron, launchd, systemd (auto-detect)"
+    ),
+) -> None:
+    """Remove installed scheduler configuration."""
+    from openeraseme.core.scheduler import detect_platform
+
+    plat = platform or detect_platform()
+    typer.echo(f"Platform: {plat}")
+    typer.echo("To uninstall, run the uninstall script from your schedules directory:")
+    typer.echo("  bash ./schedules/uninstall.sh")
+    if plat == "launchd":
+        typer.echo("")
+        typer.echo("Or manually:")
+        for label in ["com.openeraseme.tick", "com.openeraseme.poll", "com.openeraseme.rescan"]:
+            typer.echo(
+                f"  launchctl unload ~/Library/LaunchAgents/{label}.plist 2>/dev/null; "
+                f"rm -f ~/Library/LaunchAgents/{label}.plist"
+            )
+
+
+@schedule_app.command()
+def schedule_status(
+    ctx: typer.Context,
+    platform: str = typer.Option(
+        "", "--platform", help="Target platform: cron, launchd, systemd (auto-detect)"
+    ),
+) -> None:
+    """Show current schedule configuration status."""
+    from openeraseme.core.scheduler import detect_platform, get_schedule_status
+
+    plat = platform or detect_platform()
+    status = get_schedule_status(platform_name=plat)
+
+    if ctx.obj.get("output") == "json":
+        import json as _json
+
+        typer.echo(_json.dumps(status, indent=2, default=str))
+        return
+
+    typer.echo(f"Platform: {status['platform']}")
+    typer.echo("Installed services:")
+    for svc in status["installed"]:
+        label = svc.get("label", "?")
+        installed = "✓ installed" if svc.get("installed") else "✗ not installed"
+        path = svc.get("path", "")
+        typer.echo(f"  {label}: {installed}")
+        if path:
+            typer.echo(f"    Path: {path}")
+        if svc.get("error"):
+            typer.echo(f"    Error: {svc['error']}")
+
+
+# ---------------------------------------------------------------------------
+# generate-dashboard — HTML status dashboard
+# ---------------------------------------------------------------------------
+
+
+@app.command(name="generate-dashboard")
+def generate_dashboard_cmd(
+    ctx: typer.Context,
+    output: str = typer.Option("report.html", "--output", help="Output HTML file"),
+    auto_open: bool = typer.Option(False, "--open", help="Open in default browser"),
+    auto_refresh: int = typer.Option(
+        0, "--auto-refresh", help="Auto-refresh interval in seconds (0 = none)"
+    ),
+) -> None:
+    """Generate a self-contained HTML status dashboard."""
+    from openeraseme.core.dashboard import generate_dashboard, get_dashboard_data
+
+    data = get_dashboard_data()
+    html = generate_dashboard(
+        data,
+        auto_refresh_seconds=auto_refresh,
+    )
+    Path(output).write_text(html)
+
+    if ctx.obj.get("output") == "json":
+        import json as _json
+
+        result = {
+            "output_file": str(Path(output).resolve()),
+            "size_bytes": len(html),
+            "campaigns": len(data.get("campaigns", [])),
+            "requests": data.get("total_requests", 0),
+        }
+        typer.echo(_json.dumps(result, indent=2))
+        return
+
+    typer.echo(f"Dashboard generated: {Path(output).resolve()}")
+    typer.echo(f"  Size: {len(html)} bytes")
+    typer.echo(f"  Campaigns: {len(data.get('campaigns', []))}")
+    typer.echo(f"  Requests: {data.get('total_requests', 0)}")
+
+    if auto_open:
+        import webbrowser
+
+        webbrowser.open(f"file://{Path(output).resolve()}")
+
+
+# ---------------------------------------------------------------------------
+# generate-report — aggregated campaign reports
+# ---------------------------------------------------------------------------
+
+
+@app.command(name="generate-report")
+def generate_report_cmd(
+    ctx: typer.Context,
+    campaign_id: str = typer.Option(None, "--campaign-id", help="Campaign ID to report on"),
+    format: str = typer.Option(
+        "html", "--format", help="Output format: html, json, csv"
+    ),
+    output: str = typer.Option("", "--output", help="Output file path (default: auto-generated)"),
+    all_campaigns: bool = typer.Option(
+        False, "--all", help="Include all campaigns (not just specified one)"
+    ),
+) -> None:
+    """Generate an aggregated campaign report."""
+    from openeraseme.core.reports import (
+        generate_report,
+        get_report_data,
+    )
+
+    data = get_report_data(
+        campaign_id=campaign_id,
+        all_campaigns=all_campaigns,
+    )
+
+    report = generate_report(data, format=format)
+
+    if format == "json":
+        import json as _json
+
+        if output:
+            Path(output).write_text(_json.dumps(report, indent=2, default=str))
+            typer.echo(f"Report written to {Path(output).resolve()}")
+        else:
+            typer.echo(_json.dumps(report, indent=2, default=str))
+        return
+
+    if output:
+        content = str(report) if isinstance(report, str) else str(report)
+        Path(output).write_text(content)
+        typer.echo(f"Report written to {Path(output).resolve()}")
+    else:
+        output = f"report-{campaign_id or 'all'}.{format}"
+        content = str(report) if isinstance(report, str) else str(report)
+        Path(output).write_text(content)
+        typer.echo(f"Report written to {Path(output).resolve()}")
 
 
 # ---------------------------------------------------------------------------
