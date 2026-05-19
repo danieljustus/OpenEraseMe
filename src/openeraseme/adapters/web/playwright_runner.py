@@ -161,6 +161,36 @@ async def _execute_step(
         logger.debug("Waiting %.1f seconds", wait_sec)
         await _async_sleep(wait_sec)
 
+    solve_captcha = step.get("solve_captcha")
+    if solve_captcha:
+        provider = solve_captcha.get("provider", "capsolver")
+        site_key = solve_captcha.get("site_key", "")
+
+        logger.debug("Solving captcha via %s (site_key=%s)", provider, site_key)
+        from openeraseme.adapters.web.captcha_solver import CaptchaError, create_solver
+
+        try:
+            solver = create_solver(provider)
+            current_url = page.url
+            result = solver.solve_recaptcha_v2(
+                site_key=site_key,
+                page_url=current_url,
+            )
+        except CaptchaError as e:
+            msg = f"Captcha solving failed: {e}"
+            raise PlaywrightRunnerError(msg) from None
+
+        if result.token:
+            logger.debug("Injecting captcha token")
+            await page.evaluate(
+                'document.getElementById("g-recaptcha-response")?.style.display = "block";'
+            )
+            await page.fill(
+                "textarea#g-recaptcha-response, [name='g-recaptcha-response']",
+                result.token,
+            )
+            await _async_sleep(1)
+
     assert_text = step.get("assert_text")
     if assert_text:
         logger.debug("Asserting text: %s", assert_text)

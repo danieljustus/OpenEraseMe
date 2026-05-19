@@ -884,6 +884,61 @@ def auto_confirm_cmd(
 
 
 # ---------------------------------------------------------------------------
+# solve-captcha
+# ---------------------------------------------------------------------------
+
+
+@app.command(name="solve-captcha")
+def solve_captcha_cmd(
+    ctx: typer.Context,
+    provider: str = typer.Option(
+        "capsolver", "--provider", help="Captcha provider: capsolver or twocaptcha"
+    ),
+    api_key: str = typer.Option(
+        None, "--api-key", envvar="CAPSOLVER_API_KEY", help="API key (or set CAPSOLVER_API_KEY)"
+    ),
+    site_key: str = typer.Option(..., "--site-key", prompt=True, help="reCAPTCHA site key"),
+    page_url: str = typer.Option(
+        ..., "--page-url", prompt=True,
+        help="Page URL where captcha appears",
+    ),
+    action: str = typer.Option("verify", "--action", help="reCAPTCHA action"),
+) -> None:
+    """Solve a captcha using CapSolver or 2Captcha."""
+    from openeraseme.adapters.web.captcha_solver import CaptchaError, create_solver
+
+    typer.echo(f"Solving captcha via {provider}...")
+
+    try:
+        solver = create_solver(provider, api_key=api_key)
+        result = solver.solve_recaptcha_v2(
+            site_key=site_key,
+            page_url=page_url,
+        )
+    except CaptchaError as e:
+        typer.echo(f"Captcha solving failed: {e}", err=True)
+        raise typer.Exit(1) from e
+
+    if ctx.obj.get("output") == "json":
+        import json as _json
+
+        typer.echo(
+            _json.dumps(
+                {
+                    "provider": provider,
+                    "task_id": result.task_id,
+                    "token": result.token,
+                },
+                indent=2,
+            )
+        )
+        return
+
+    typer.echo(f"Captcha solved (task: {result.task_id})")
+    typer.echo(f"Token: {result.token[:50]}...")
+
+
+# ---------------------------------------------------------------------------
 # db
 # ---------------------------------------------------------------------------
 
