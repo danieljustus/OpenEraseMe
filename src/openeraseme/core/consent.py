@@ -12,6 +12,7 @@ import hashlib
 import hmac
 import json
 import os
+import sys
 import time
 from pathlib import Path
 
@@ -70,10 +71,65 @@ def consume_token(token: str) -> None:
     token_file.unlink(missing_ok=True)
 
 
+def revoke_token(token: str) -> bool:
+    """Revoke a consent token by removing its file.
+
+    Returns True if the token existed and was revoked, False otherwise.
+    """
+    token_file = _consent_dir() / f"consent_{token}.json"
+    if not token_file.exists():
+        return False
+    token_file.unlink(missing_ok=True)
+    return True
+
+
+def list_tokens() -> list[dict]:
+    """List all active consent tokens with their metadata."""
+    tokens: list[dict] = []
+    now = int(time.time())
+    consent_dir = _consent_dir()
+    if not consent_dir.exists():
+        return tokens
+    for f in sorted(consent_dir.glob("consent_*.json")):
+        try:
+            payload = json.loads(f.read_text())
+        except (json.JSONDecodeError, OSError):
+            continue
+        expiry = payload.get("expires_at", 0)
+        if now > expiry:
+            f.unlink(missing_ok=True)
+            continue
+        token_id = f.stem.replace("consent_", "")
+        tokens.append({
+            "token": token_id,
+            "command": payload.get("command", "?"),
+            "issued_at": payload.get("issued_at", 0),
+            "expires_at": expiry,
+        })
+    return tokens
+
+
+def tty_available() -> bool:
+    """Check whether an interactive TTY is available for prompting."""
+    return sys.stdin.isatty() and sys.stdout.isatty()
+
+
+def _tty_prompt(message: str = "Are you sure?") -> bool:
+    """Prompt the user on the terminal, returning True on affirmative."""
+    if not tty_available():
+        return False
+    try:
+        response = input(f"{message} [y/N] ")
+        return response.strip().lower() in ("y", "yes")
+    except (EOFError, KeyboardInterrupt):
+        return False
+
+
 def check_consent(
     command: str,
     yes: bool = False,
     consent_token: str | None = None,
+    interactive: bool = True,
 ) -> bool:
     if yes:
         return True
@@ -82,4 +138,8 @@ def check_consent(
     env_token = os.environ.get("OPENERASEME_CONSENT", "")
     if env_token:
         return verify_token(command, env_token)
+    if interactive:
+        return _tty_prompt(
+            f"Destructive command '{command}' requires consent. Proceed?"
+        )
     return False

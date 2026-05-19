@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import time
+from datetime import datetime
 from enum import StrEnum
 
 import typer
@@ -282,15 +284,57 @@ def execute(
 
 @app.command()
 def grant(
+    ctx: typer.Context,
     command: str = typer.Argument("execute", help="Command to authorize (e.g. execute)"),
     ttl: int = typer.Option(86400, "--ttl", help="Token TTL in seconds"),
+    revoke: str = typer.Option(None, "--revoke", help="Revoke a consent token"),
+    revoke_all: bool = typer.Option(False, "--revoke-all", help="Revoke all active tokens"),
+    list_tokens: bool = typer.Option(False, "--list", help="List active tokens"),
 ) -> None:
-    from openeraseme.core.consent import issue_token
+    from openeraseme.core.consent import (
+        consume_token,
+        issue_token,
+        revoke_token,
+    )
+    from openeraseme.core.consent import (
+        list_tokens as _list_tokens,
+    )
+
+    if list_tokens:
+        tokens = _list_tokens()
+        if not tokens:
+            typer.echo("No active tokens.")
+            return
+        for t in tokens:
+            typer.echo(
+                f"  {t['token']}  cmd={t['command']}  "
+                f"expires={datetime.fromtimestamp(t['expires_at']).isoformat()}"
+            )
+        return
+
+    if revoke:
+        if revoke_token(revoke):
+            typer.echo(f"Token revoked: {revoke}")
+        else:
+            typer.echo(f"Token not found: {revoke}", err=True)
+            raise typer.Exit(1)
+        return
+
+    if revoke_all:
+        tokens = _list_tokens()
+        if not tokens:
+            typer.echo("No active tokens to revoke.")
+            return
+        for t in tokens:
+            consume_token(t["token"])
+        typer.echo(f"Revoked {len(tokens)} token(s).")
+        return
 
     token = issue_token(command, ttl=ttl)
     typer.echo(f"Consent token: {token}")
     typer.echo(f"  Command: {command}")
     typer.echo(f"  TTL: {ttl}s")
+    typer.echo(f"  Expires: {datetime.fromtimestamp(int(time.time()) + ttl).isoformat()}")
     typer.echo("")
     typer.echo(f"Use: OPENERASEME_CONSENT={token} openeraseme {command} ...")
     typer.echo(f"Or:  openeraseme {command} ... --consent {token}")
