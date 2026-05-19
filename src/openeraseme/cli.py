@@ -928,6 +928,135 @@ def auto_confirm_cmd(
 
 
 # ---------------------------------------------------------------------------
+# generate-rebuttal
+# ---------------------------------------------------------------------------
+
+
+@app.command(name="generate-rebuttal")
+def generate_rebuttal_cmd(
+    ctx: typer.Context,
+    request_id: int = typer.Argument(..., help="Request ID to generate rebuttal for"),
+    api_key: str = typer.Option(
+        None, "--api-key", envvar="ANTHROPIC_API_KEY", help="Anthropic API key"
+    ),
+    model: str = typer.Option("claude-3-5-sonnet-latest", "--model", help="Claude model name"),
+    save: bool = typer.Option(True, "--save/--no-save", help="Save rebuttal to DB"),
+) -> None:
+    """Generate a rebuttal email for a broker rejection reply."""
+    from openeraseme.adapters.triage.responder import generate_rebuttal
+    from openeraseme.core.db import init_db
+    from openeraseme.core.events import (
+        append_event,
+        get_events,
+        get_removal_request,
+    )
+    from openeraseme.core.identity import load_profile, profile_exists
+    from openeraseme.core.projection import upsert_state
+    from openeraseme.registry.loader import load_broker
+
+    init_db()
+
+    req = get_removal_request(request_id)
+    if req is None:
+        typer.echo(f"Request #{request_id} not found.", err=True)
+        raise typer.Exit(1)
+
+    events = get_events(request_id)
+    if not events:
+        typer.echo(f"No events found for request #{request_id}.", err=True)
+        raise typer.Exit(1)
+
+    last_event = events[-1]
+    payload = last_event.get("payload_json", {})
+
+    broker_id = req.get("broker_id", "")
+    try:
+        broker = load_broker(broker_id)
+    except Exception:
+        broker = None
+
+    broker_name = broker.name if broker else broker_id
+    broker_website = broker.website if broker else ""
+
+    # Find latest inbox reply for this request
+    from openeraseme.core.db import get_connection
+
+    conn = get_connection()
+    reply = conn.execute(
+        "SELECT id, subject, snippet, from_addr FROM inbox_replies "
+        "WHERE request_id = ? ORDER BY received_at DESC LIMIT 1",
+        (request_id,),
+    ).fetchone()
+
+    broker_message = reply["snippet"] if reply else payload.get("template", "")
+    original_request_date = last_event.get("occurred_at", "")
+
+    profile = load_profile() if profile_exists() else None
+
+    result = generate_rebuttal(
+        broker_name=broker_name,
+        broker_website=broker_website,
+        broker_message=broker_message or "",
+        original_request_template=payload.get("template", ""),
+        original_request_date=original_request_date,
+        profile=profile,
+        api_key=api_key,
+        model=model,
+    )
+
+    if ctx.obj.get("output") == "json":
+        import json as _json
+
+        output = {
+            "request_id": request_id,
+            "template_name": result.template_name,
+            "label": result.label,
+            "jurisdiction": result.jurisdiction,
+            "rejection_classification": result.rejection_classification,
+            "confidence": result.confidence,
+            "needs_human_review": result.needs_human_review,
+            "llm_used": result.llm_used,
+            "rebuttal_body": result.rebuttal_body,
+        }
+        if result.usage_record:
+            output["usage"] = result.usage_record.record()
+        typer.echo(_json.dumps(output, indent=2))
+        return
+
+    typer.echo(f"Rebuttal for request #{request_id}:")
+    typer.echo(f"  Template:   {result.label}")
+    typer.echo(f"  Jurisdiction: {result.jurisdiction}")
+    typer.echo(f"  Confidence: {result.confidence:.2f}")
+    typer.echo(f"  LLM used:   {result.llm_used}")
+    if result.needs_human_review:
+        typer.echo("  *** Needs human review ***")
+    if result.usage_record:
+        usage = result.usage_record.record()
+        typer.echo(
+            f"  Cost:       ${usage['cost']:.6f}"
+            f" ({usage['input_tokens']} in / {usage['output_tokens']} out)"
+        )
+    typer.echo("")
+    typer.echo(result.rebuttal_body)
+
+    if save:
+        append_event(
+            request_id,
+            "REBUTTAL_SENT",
+            payload={
+                "template_name": result.template_name,
+                "rejection_classification": result.rejection_classification,
+                "confidence": result.confidence,
+                "llm_used": result.llm_used,
+                "broker_message_snippet": (broker_message or "")[:200],
+            },
+            source="system",
+        )
+        upsert_state(request_id)
+        typer.echo("REBUTTAL_SENT event saved to database.")
+
+
+# ---------------------------------------------------------------------------
 # solve-captcha
 # ---------------------------------------------------------------------------
 
