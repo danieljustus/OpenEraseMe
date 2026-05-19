@@ -86,16 +86,20 @@ def handle_auto_confirm(
         upsert_state(request_id)
 
     if output_format == "json":
-        return json.dumps({
-            "request_id": request_id,
-            "success": result.success,
-            "step": result.step,
-            "clicked_url": result.clicked_url,
-            "error": result.error,
-            "dry_run": result.dry_run,
-            "screenshot_before": result.screenshot_before,
-            "screenshot_after": result.screenshot_after,
-        }, indent=2, default=str)
+        return json.dumps(
+            {
+                "request_id": request_id,
+                "success": result.success,
+                "step": result.step,
+                "clicked_url": result.clicked_url,
+                "error": result.error,
+                "dry_run": result.dry_run,
+                "screenshot_before": result.screenshot_before,
+                "screenshot_after": result.screenshot_after,
+            },
+            indent=2,
+            default=str,
+        )
 
     if result.dry_run:
         return f"[DRY RUN] Would click: {result.clicked_url}"

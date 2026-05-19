@@ -11,10 +11,14 @@ def handle_tick(dry_run: bool = False, output_format: str = "text") -> str:
     actions = run_tick(dry_run=dry_run)
 
     if output_format == "json":
-        return json.dumps({
-            "total_actions": len(actions),
-            "actions": [a.__dict__ for a in actions],
-        }, indent=2, default=str)
+        return json.dumps(
+            {
+                "total_actions": len(actions),
+                "actions": [a.__dict__ for a in actions],
+            },
+            indent=2,
+            default=str,
+        )
 
     if not actions:
         return "Tick: no actions needed."

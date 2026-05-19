@@ -37,6 +37,7 @@ def handle_poll_inbox(
         )
     except IMAPError as e:
         import typer
+
         typer.echo(f"IMAP error: {e}", err=True)
         raise typer.Exit(1) from e
 

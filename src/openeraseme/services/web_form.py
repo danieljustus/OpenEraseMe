@@ -77,21 +77,23 @@ def handle_run_web_form(
         raise typer.Exit(1) from e
 
     if output_format == "json":
-        return json.dumps({
-            "broker_id": broker_id,
-            "success": result.success,
-            "step_index": result.step_index,
-            "total_steps": result.total_steps,
-            "error": result.error,
-            "screenshot_path": result.screenshot_path,
-        }, indent=2)
+        return json.dumps(
+            {
+                "broker_id": broker_id,
+                "success": result.success,
+                "step_index": result.step_index,
+                "total_steps": result.total_steps,
+                "error": result.error,
+                "screenshot_path": result.screenshot_path,
+            },
+            indent=2,
+        )
 
     if result.success:
         return f"Web form completed successfully ({result.total_steps} steps)."
 
     typer.echo(
-        f"Web form failed at step {result.step_index + 1}/{result.total_steps}: "
-        f"{result.error}"
+        f"Web form failed at step {result.step_index + 1}/{result.total_steps}: {result.error}"
     )
     if result.screenshot_path:
         typer.echo(f"Screenshot saved to: {result.screenshot_path}")

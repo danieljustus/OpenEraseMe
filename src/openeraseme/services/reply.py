@@ -24,12 +24,14 @@ def handle_classify_reply(
     req = get_removal_request(request_id)
     if req is None:
         import typer
+
         typer.echo(f"Request #{request_id} not found.", err=True)
         raise typer.Exit(1)
 
     events = get_events(request_id)
     if not events:
         import typer
+
         typer.echo(f"No events found for request #{request_id}.", err=True)
         raise typer.Exit(1)
 
@@ -57,12 +59,14 @@ def handle_classify_reply(
 
     if reply is None:
         import typer
+
         typer.echo(f"No unclassified inbox reply found for request #{request_id}.", err=True)
         raise typer.Exit(1)
 
     classifier = ReplyClassifier(api_key=api_key, model=model)
     if not classifier.is_available():
         import typer
+
         typer.echo(
             "Anthropic API is not available. Set ANTHROPIC_API_KEY or provide --api-key.",
             err=True,
@@ -150,12 +154,14 @@ def handle_generate_rebuttal(
     req = get_removal_request(request_id)
     if req is None:
         import typer
+
         typer.echo(f"Request #{request_id} not found.", err=True)
         raise typer.Exit(1)
 
     events = get_events(request_id)
     if not events:
         import typer
+
         typer.echo(f"No events found for request #{request_id}.", err=True)
         raise typer.Exit(1)
 

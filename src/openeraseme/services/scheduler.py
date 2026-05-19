@@ -44,12 +44,15 @@ def handle_generate_scheduler(
     written = write_scheduler_files(files, output_dir, dry_run=dry_run)
 
     if output_format == "json":
-        return json.dumps({
-            "platform": platform or "auto",
-            "output_dir": output_dir,
-            "files": written,
-            "dry_run": dry_run,
-        }, indent=2)
+        return json.dumps(
+            {
+                "platform": platform or "auto",
+                "output_dir": output_dir,
+                "files": written,
+                "dry_run": dry_run,
+            },
+            indent=2,
+        )
 
     if dry_run:
         lines = [f"[dry-run] Would generate {len(files)} file(s) for {platform or 'auto'}:"]
@@ -85,11 +88,14 @@ def handle_schedule_install(
     written = write_scheduler_files(files, output_dir)
 
     if output_format == "json":
-        return json.dumps({
-            "platform": plat,
-            "output_dir": output_dir,
-            "files": written,
-        }, indent=2)
+        return json.dumps(
+            {
+                "platform": plat,
+                "output_dir": output_dir,
+                "files": written,
+            },
+            indent=2,
+        )
 
     lines = [f"Schedule configs generated for {plat} in {output_dir}.", ""]
     lines.append("To install:")

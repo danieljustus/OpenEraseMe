@@ -42,6 +42,7 @@ def handle_grant(
         if revoke_token(revoke):
             return f"Token revoked: {revoke}"
         import typer
+
         typer.echo(f"Token not found: {revoke}", err=True)
         raise typer.Exit(1)
 
@@ -56,12 +57,15 @@ def handle_grant(
     token = issue_token(command, ttl=ttl)
 
     if output_format == "json":
-        return json.dumps({
-            "token": token,
-            "command": command,
-            "ttl": ttl,
-            "expires_at": int(time.time()) + ttl,
-        }, indent=2)
+        return json.dumps(
+            {
+                "token": token,
+                "command": command,
+                "ttl": ttl,
+                "expires_at": int(time.time()) + ttl,
+            },
+            indent=2,
+        )
 
     lines = [
         f"Consent token: {token}",

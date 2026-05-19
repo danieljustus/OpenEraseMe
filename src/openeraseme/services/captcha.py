@@ -27,10 +27,13 @@ def handle_solve_captcha(
         raise typer.Exit(1) from e
 
     if output_format == "json":
-        return json.dumps({
-            "provider": provider,
-            "task_id": result.task_id,
-            "token": result.token,
-        }, indent=2)
+        return json.dumps(
+            {
+                "provider": provider,
+                "task_id": result.task_id,
+                "token": result.token,
+            },
+            indent=2,
+        )
 
     return f"Captcha solved (task: {result.task_id})\nToken: {result.token[:50]}..."

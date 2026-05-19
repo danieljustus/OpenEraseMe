@@ -63,6 +63,7 @@ def handle_execute(
 ) -> str:
     if not dry_run and not check_consent("execute", yes=yes, consent_token=consent_token):
         import typer
+
         typer.echo(
             "Error: Destructive command requires consent. "
             "Use --yes or issue a token via 'grant' command.",
