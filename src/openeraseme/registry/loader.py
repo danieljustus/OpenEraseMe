@@ -16,10 +16,10 @@ def _registry_dir() -> Path:
     if env_dir:
         return Path(env_dir)
     pkg_root = resources.files("openeraseme")
-    candidate = Path(pkg_root) / "registry"
+    candidate = Path(str(pkg_root)) / "registry"
     if candidate.exists() and (candidate / "brokers").exists():
         return candidate
-    for parent in Path(pkg_root).parents:
+    for parent in Path(str(pkg_root)).parents:
         if (parent / "registry" / "brokers").exists():
             return parent / "registry"
     msg = "Could not find registry directory"
@@ -93,7 +93,7 @@ def load_all_brokers(
     if cache_key in _BROKER_CACHE:
         brokers = _BROKER_CACHE[cache_key]
     else:
-        brokers: list[Broker] = []
+        brokers = []
         for yml in sorted(registry_path.rglob("*.yaml")):
             if yml.name.startswith("_"):
                 continue

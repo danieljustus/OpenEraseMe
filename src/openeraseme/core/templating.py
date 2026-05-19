@@ -15,10 +15,10 @@ def _templates_dir() -> Path:
     if env_dir:
         return Path(env_dir) / "registry" / "laws"
     pkg_root = resources.files("openeraseme")
-    candidate = Path(pkg_root) / "registry" / "laws"
+    candidate = Path(str(pkg_root)) / "registry" / "laws"
     if candidate.exists() and any(candidate.iterdir()):
         return candidate
-    for parent in Path(pkg_root).parents:
+    for parent in Path(str(pkg_root)).parents:
         if (parent / "registry" / "laws").exists():
             return parent / "registry" / "laws"
     msg = "Could not find templates directory (registry/laws)"

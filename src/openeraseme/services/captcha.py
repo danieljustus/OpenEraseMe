@@ -16,6 +16,10 @@ def handle_solve_captcha(
 ) -> str:
     typer.echo(f"Solving captcha via {provider}...")
 
+    if site_key is None or page_url is None:
+        typer.echo("site_key and page_url are required", err=True)
+        raise typer.Exit(1)
+
     try:
         solver = create_solver(provider, api_key=api_key)
         result = solver.solve_recaptcha_v2(

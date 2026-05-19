@@ -5,6 +5,8 @@ import json
 
 import typer
 
+from typing import cast
+
 from openeraseme.adapters.web.playwright_runner import (
     PlaywrightRunnerError,
 )
@@ -13,6 +15,7 @@ from openeraseme.adapters.web.playwright_runner import (
 )
 from openeraseme.core.identity import load_profile, profile_exists
 from openeraseme.registry.loader import load_broker
+from openeraseme.registry.schema import WebFormOptOut
 
 
 def handle_run_web_form(
@@ -32,7 +35,7 @@ def handle_run_web_form(
         typer.echo(f"Broker '{broker_id}' has no web form opt-out channel.", err=True)
         raise typer.Exit(1)
 
-    form = web_forms[0]
+    form = cast(WebFormOptOut, web_forms[0])
     url = form.url
     steps_data = [s.model_dump(exclude_none=True) for s in form.form_spec.steps]
 
