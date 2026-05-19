@@ -37,7 +37,8 @@ class TestPollInbox:
             "--since", "1",
         )
         assert result.exit_code != 0
-        assert "--password" in result.stdout or "--password" in result.stderr
+        # --password option was removed for security; CLI should reject it
+        assert "No such option" in result.stderr
 
 
 class TestClassifyReply:

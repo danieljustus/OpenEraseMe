@@ -7,6 +7,8 @@ import typer
 
 from openeraseme.adapters.web.playwright_runner import (
     PlaywrightRunnerError,
+)
+from openeraseme.adapters.web.playwright_runner import (
     run_web_form as _run_form,
 )
 from openeraseme.core.identity import load_profile, profile_exists

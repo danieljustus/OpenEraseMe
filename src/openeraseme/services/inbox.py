@@ -5,6 +5,8 @@ import json
 from openeraseme.adapters.email.smtp_imap import (
     IMAPError,
     match_reply_to_request,
+)
+from openeraseme.adapters.email.smtp_imap import (
     poll_inbox as _poll,
 )
 from openeraseme.core.db import init_db

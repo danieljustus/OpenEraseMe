@@ -7,8 +7,10 @@ from datetime import datetime
 from openeraseme.core.consent import (
     consume_token,
     issue_token,
-    list_tokens as _list_tokens,
     revoke_token,
+)
+from openeraseme.core.consent import (
+    list_tokens as _list_tokens,
 )
 
 
