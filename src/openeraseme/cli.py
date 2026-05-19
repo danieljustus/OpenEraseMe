@@ -462,6 +462,54 @@ def poll_inbox(
 
 
 # ---------------------------------------------------------------------------
+# tick — lifecycle engine
+# ---------------------------------------------------------------------------
+
+
+@app.command()
+def tick(
+    ctx: typer.Context,
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show actions without executing"),
+) -> None:
+    """Run one tick cycle: check deadlines, send reminders, escalate."""
+    from openeraseme.core.db import init_db
+    from openeraseme.core.deadlines import apply_tick_actions, run_tick
+
+    init_db()
+
+    actions = run_tick(dry_run=dry_run)
+
+    if ctx.obj.get("output") == "json":
+        import json as _json
+
+        typer.echo(
+            _json.dumps(
+                {
+                    "total_actions": len(actions),
+                    "actions": [a.__dict__ for a in actions],
+                },
+                indent=2,
+                default=str,
+            )
+        )
+        return
+
+    if not actions:
+        typer.echo("Tick: no actions needed.")
+        return
+
+    typer.echo(f"Tick: {len(actions)} action(s)")
+    for a in actions:
+        dry_tag = " (DRY RUN)" if a.dry_run else ""
+        typer.echo(f"  #{a.request_id} [{a.action_type}] {a.description}{dry_tag}")
+
+    if not dry_run:
+        results = apply_tick_actions(actions)
+        executed = sum(1 for r in results if r["executed"])
+        typer.echo(f"Executed {executed}/{len(results)} actions.")
+
+
+# ---------------------------------------------------------------------------
 # classify-reply
 # ---------------------------------------------------------------------------
 
