@@ -71,6 +71,25 @@ def show_profile() -> None:
         typer.echo(f"Jurisdiction: {j}")
 
 
+@app.command()
+def render_template(
+    template: str = typer.Argument(help="Template name (e.g. gdpr-art17.de.md.j2)"),
+    broker_name: str = typer.Option("", help="Name of the data broker"),
+    broker_website: str = typer.Option("", help="Broker website URL"),
+) -> None:
+    from openeraseme.core.identity import load_profile, profile_exists
+    from openeraseme.core.templating import render_template as _render
+
+    profile = load_profile() if profile_exists() else None
+    result = _render(
+        template,
+        profile=profile,
+        broker_name=broker_name,
+        broker_website=broker_website,
+    )
+    typer.echo(result)
+
+
 @accounts_app.command()
 def add(
     provider: str = typer.Argument(help="Provider: gmail or outlook"),
