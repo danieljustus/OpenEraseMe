@@ -938,6 +938,7 @@ name = "openeraseme"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "aiosmtplib" },
     { name = "cryptography" },
     { name = "email-validator" },
     { name = "jinja2" },
@@ -959,9 +960,6 @@ dev = [
     { name = "pytest-asyncio" },
     { name = "ruff" },
 ]
-email = [
-    { name = "aiosmtplib" },
-]
 triage = [
     { name = "anthropic" },
 ]
@@ -971,7 +969,7 @@ web = [
 
 [package.metadata]
 requires-dist = [
-    { name = "aiosmtplib", marker = "extra == 'email'", specifier = ">=3.0.0" },
+    { name = "aiosmtplib", specifier = ">=3.0.0" },
     { name = "anthropic", marker = "extra == 'triage'", specifier = ">=0.34.0" },
     { name = "cryptography", specifier = ">=42.0.0" },
     { name = "email-validator", specifier = ">=2.1.0" },
@@ -991,7 +989,7 @@ requires-dist = [
     { name = "structlog", specifier = ">=24.0.0" },
     { name = "typer", specifier = ">=0.12.0" },
 ]
-provides-extras = ["dev", "email", "web", "triage"]
+provides-extras = ["dev", "web", "triage"]
 
 [[package]]
 name = "packaging"
