@@ -8,23 +8,26 @@ laws:
   - CCPA
 data_sensitivity: 4
 priority: high
+disabled: true
 
 opt_out:
   - type: web_form
     url: https://www.beenverified.com/app/optout
     form_spec:
       steps:
+        - goto: .
         - fill:
-            selector: "#first_name"
-            from: full_name
-        - fill:
-            selector: "#email"
-            from: email
+            "#first_name": "${full_name}"
+            "#email": "${email}"
         - solve_captcha:
             type: recaptcha-v2
-            sitekey: "6Lc..."
+            site_key: NEEDS_RESEARCH_REPLACE_WITH_REAL_SITEKEY
+            provider: capsolver
         - click: "#submit"
         - wait_for: ".confirmation"
+        - screenshot: "result"
+      timeout_seconds: 45.0
+      rate_limit_delay: 2.0
 
 verification:
   ack_keywords:
@@ -34,3 +37,10 @@ verification:
     - "already opted out"
   human_required_keywords:
     - "manual review"
+
+notes: |
+  Disabled until the live reCAPTCHA site_key is captured from
+  https://www.beenverified.com/app/optout. The previous placeholder
+  ("6Lc...") was not a real key; CapSolver would fail. To re-enable:
+  inspect the form's DOM for the data-sitekey attribute, replace
+  NEEDS_RESEARCH_REPLACE_WITH_REAL_SITEKEY above, and set disabled: false.

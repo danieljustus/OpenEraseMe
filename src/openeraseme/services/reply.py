@@ -5,10 +5,10 @@ import json
 from openeraseme.adapters.triage.classifier import ReplyClassifier
 from openeraseme.adapters.triage.responder import generate_rebuttal
 from openeraseme.core.db import get_connection, init_db
-from openeraseme.core.events import append_event, get_events, get_removal_request
+from openeraseme.core.events import get_events, get_removal_request
 from openeraseme.core.identity import load_profile, profile_exists
 from openeraseme.core.orchestrator import submit_inbox_reply
-from openeraseme.core.projection import upsert_state
+from openeraseme.core.projection import append_event_and_project
 from openeraseme.registry.loader import load_broker
 
 
@@ -124,7 +124,7 @@ def handle_classify_reply(
             snippet=reply["snippet"] or "",
             classified_as=result.label,
         )
-        append_event(
+        append_event_and_project(
             request_id,
             result.event_type,
             payload={
@@ -136,7 +136,6 @@ def handle_classify_reply(
             },
             source="system",
         )
-        upsert_state(request_id)
         output_str += "\nClassification saved to database."
 
     return output_str
@@ -234,7 +233,7 @@ def handle_generate_rebuttal(
         output_str = "\n".join(lines)
 
     if save:
-        append_event(
+        append_event_and_project(
             request_id,
             "REBUTTAL_SENT",
             payload={
@@ -246,7 +245,6 @@ def handle_generate_rebuttal(
             },
             source="system",
         )
-        upsert_state(request_id)
         output_str += "\nREBUTTAL_SENT event saved to database."
 
     return output_str

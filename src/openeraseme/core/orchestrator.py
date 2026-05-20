@@ -12,7 +12,7 @@ from openeraseme.core.events import (
     get_removal_request,
     list_removal_requests,
 )
-from openeraseme.core.projection import rebuild_all_states, upsert_state
+from openeraseme.core.projection import append_event_and_project, rebuild_all_states
 from openeraseme.registry.loader import load_all_brokers
 from openeraseme.registry.schema import Broker
 
@@ -149,7 +149,7 @@ def execute_request(
             account=account,
             config_path=config_path,
         )
-        append_event(
+        append_event_and_project(
             request_id,
             "SENT",
             payload={
@@ -159,15 +159,13 @@ def execute_request(
                 "expected_response_days": payload.get("expected_response_days", 30),
             },
         )
-        upsert_state(request_id)
         return {"success": True, "request_id": request_id, "result": result}
     except HimalayaError as e:
-        append_event(
+        append_event_and_project(
             request_id,
             "SEND_FAILED",
             payload={"error": str(e), "to": channel_endpoint},
         )
-        upsert_state(request_id)
         return {"success": False, "error": str(e), "request_id": request_id}
 
 
@@ -312,7 +310,7 @@ async def execute_campaign_async(
         req_id = request_map.get(to_addr)
 
         if sr["success"] and req_id is not None:
-            append_event(
+            append_event_and_project(
                 req_id,
                 "SENT",
                 payload={
@@ -321,14 +319,12 @@ async def execute_campaign_async(
                     "expected_response_days": 30,
                 },
             )
-            upsert_state(req_id)
         elif req_id is not None:
-            append_event(
+            append_event_and_project(
                 req_id,
                 "SEND_FAILED",
                 payload={"error": sr.get("error", ""), "to": to_addr},
             )
-            upsert_state(req_id)
 
         results.append(sr)
 
@@ -407,18 +403,18 @@ def submit_inbox_reply(
     reply_id = cur.lastrowid
 
     if request_id and classified_as:
-        _event_for_classification(request_id, classified_as, subject, from_addr)
-        upsert_state(request_id)
+        event_type = _classification_event_type(classified_as)
+        append_event_and_project(
+            request_id,
+            event_type,
+            payload={"subject": subject, "from": from_addr},
+            source="inbox",
+        )
 
     return {"reply_id": reply_id, "request_id": request_id, "classified_as": classified_as}
 
 
-def _event_for_classification(
-    request_id: int,
-    classified_as: str,
-    subject: str,
-    from_addr: str,
-) -> None:
+def _classification_event_type(classified_as: str) -> str:
     mapping: dict[str, str] = {
         "ack": "ACK",
         "verification": "VERIFICATION_REQUESTED",
@@ -429,10 +425,4 @@ def _event_for_classification(
         "bounce": "BOUNCE",
         "noise": "NOTE_ADDED",
     }
-    event_type = mapping.get(classified_as, "NOTE_ADDED")
-    append_event(
-        request_id,
-        event_type,
-        payload={"subject": subject, "from": from_addr},
-        source="inbox",
-    )
+    return mapping.get(classified_as, "NOTE_ADDED")

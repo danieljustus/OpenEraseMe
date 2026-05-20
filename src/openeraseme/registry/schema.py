@@ -30,6 +30,15 @@ class Priority(StrEnum):
     low = "low"
 
 
+class SolveCaptcha(BaseModel):
+    type: str
+    site_key: str
+    provider: str | None = None
+    action: str | None = None
+    min_score: float | None = None
+    is_invisible: bool | None = None
+
+
 class FormStep(BaseModel):
     goto: str | None = None
     fill: dict[str, str] | None = None
@@ -39,7 +48,7 @@ class FormStep(BaseModel):
     wait_seconds: float | None = None
     screenshot: str | None = None
     assert_text: str | None = None
-    solve_captcha: dict[str, str] | None = None
+    solve_captcha: SolveCaptcha | None = None
 
 
 class FormSpec(BaseModel):
@@ -85,6 +94,7 @@ class Broker(BaseModel):
     priority: Priority
     opt_out: list[OptOutChannel] = Field(min_length=1)
     verification: Verification | None = None
+    disabled: bool = False
     notes: str | None = None
 
 

@@ -28,17 +28,19 @@ opt_out:
     url: https://example-broker.com/privacy/delete
     form_spec:
       steps:
+        - goto: .
         - fill:
-            selector: "#name"
-            from: full_name
-        - fill:
-            selector: "#email"
-            from: email
+            "#name": "${full_name}"
+            "#email": "${email}"
         - solve_captcha:
             type: recaptcha-v2
-            sitekey: "6Lc..."
+            site_key: "REPLACE_WITH_LIVE_SITEKEY"  # capture from page source
+            provider: capsolver
         - click: "#submit"
         - wait_for: ".confirmation"
+        - screenshot: "result"
+      timeout_seconds: 30.0
+      rate_limit_delay: 1.5
 
 verification:
   ack_keywords:

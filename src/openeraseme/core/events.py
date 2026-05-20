@@ -85,7 +85,14 @@ def append_event(
     payload: dict[str, Any] | None = None,
     source: str = "system",
     occurred_at: str | None = None,
+    commit: bool = True,
 ) -> int:
+    """Append an event to the request_events log.
+
+    When ``commit=False`` the caller is responsible for committing — used by
+    ``append_event_and_project()`` to atomically bundle event + projection in
+    a single transaction.
+    """
     if event_type not in EVENT_TYPES:
         msg = f"Unknown event type: {event_type}. Valid: {sorted(EVENT_TYPES)}"
         raise ValueError(msg)
@@ -101,7 +108,8 @@ def append_event(
            VALUES (?, ?, ?, ?, ?, ?)""",
         (request_id, occurred_at or now, now, event_type, json.dumps(payload or {}), source),
     )
-    conn.commit()
+    if commit:
+        conn.commit()
     eid: int = cur.lastrowid  # type: ignore[assignment]
     return eid
 

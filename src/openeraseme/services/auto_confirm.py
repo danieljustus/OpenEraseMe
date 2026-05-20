@@ -7,8 +7,8 @@ import typer
 
 from openeraseme.adapters.web.confirmation_clicker import auto_confirm
 from openeraseme.core.db import get_connection, init_db
-from openeraseme.core.events import append_event, get_events, get_removal_request
-from openeraseme.core.projection import upsert_state
+from openeraseme.core.events import get_events, get_removal_request
+from openeraseme.core.projection import append_event_and_project
 
 
 def handle_auto_confirm(
@@ -61,7 +61,7 @@ def handle_auto_confirm(
     )
 
     if not dry_run and result.success:
-        append_event(
+        append_event_and_project(
             request_id,
             "CONFIRMATION_LINK_CLICKED",
             payload={
@@ -72,9 +72,8 @@ def handle_auto_confirm(
             },
             source="system",
         )
-        upsert_state(request_id)
     elif not dry_run and result.error:
-        append_event(
+        append_event_and_project(
             request_id,
             "NOTE_ADDED",
             payload={
@@ -83,7 +82,6 @@ def handle_auto_confirm(
             },
             source="system",
         )
-        upsert_state(request_id)
 
     if output_format == "json":
         return json.dumps(

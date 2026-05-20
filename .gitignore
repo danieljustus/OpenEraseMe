@@ -33,3 +33,6 @@ token.json
 
 # Logs
 *.log
+
+# MCP / agent scratch
+.playwright-mcp/

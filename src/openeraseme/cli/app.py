@@ -15,6 +15,7 @@ from openeraseme.services.account import (
     handle_account_remove,
 )
 from openeraseme.services.auto_confirm import handle_auto_confirm
+from openeraseme.services.broker import handle_brokers_list, handle_brokers_show
 from openeraseme.services.campaign import (
     handle_execute,
     handle_plan_create,
@@ -103,6 +104,12 @@ schedule_app = typer.Typer(
     no_args_is_help=True,
 )
 app.add_typer(schedule_app)
+brokers_app = typer.Typer(
+    name="brokers",
+    help="Discover brokers in the registry (list, show)",
+    no_args_is_help=True,
+)
+app.add_typer(brokers_app)
 
 
 # ── helpers ──────────────────────────────────────────────────────────────
@@ -834,6 +841,43 @@ def generate_report_cmd(
 def db_init() -> None:
     result = handle_db_init()
     print_success(result)
+
+
+@brokers_app.command(name="list")
+def brokers_list_cmd(
+    ctx: typer.Context,
+    jurisdiction: str = typer.Option(None, help="Filter by jurisdiction (e.g. DE, US, EU)"),
+    priority: str = typer.Option(None, help="Filter by priority: high, medium, low"),
+    category: str = typer.Option(
+        None,
+        help="Filter by category: people-search, marketing, credit, analytics, "
+        "background-check, social-media, other",
+    ),
+    include_disabled: bool = typer.Option(
+        False,
+        "--include-disabled",
+        help="Include brokers marked disabled (default: skip them).",
+    ),
+) -> None:
+    """List brokers in the registry, optionally filtered."""
+    result = handle_brokers_list(
+        jurisdiction=jurisdiction,
+        priority=priority,
+        category=category,
+        include_disabled=include_disabled,
+        output_format=ctx.obj["output"],
+    )
+    _render(ctx.obj["output"], result)
+
+
+@brokers_app.command(name="show")
+def brokers_show_cmd(
+    ctx: typer.Context,
+    broker_id: str = typer.Argument(help="Broker id (e.g. acxiom-eu, spokeo)"),
+) -> None:
+    """Show full details of one broker by id."""
+    result = handle_brokers_show(broker_id, output_format=ctx.obj["output"])
+    _render(ctx.obj["output"], result)
 
 
 if __name__ == "__main__":

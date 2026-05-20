@@ -111,3 +111,93 @@ class TestRegistryLoader:
         schema = _load_schema()
         with pytest.raises(jsonschema.ValidationError):
             jsonschema.validate(data, schema)
+
+
+class TestFormDSLStandardization:
+    """A5/A6: standardized form_spec DSL — schema rejects the old non-uniform syntax."""
+
+    def _minimal_broker(self, step: dict) -> dict:
+        return {
+            "id": "test-broker",
+            "name": "Test",
+            "website": "https://example.com",
+            "category": "people-search",
+            "jurisdictions": ["US"],
+            "laws": ["CCPA"],
+            "priority": "low",
+            "opt_out": [
+                {
+                    "type": "web_form",
+                    "url": "https://example.com/optout",
+                    "form_spec": {"steps": [step]},
+                }
+            ],
+        }
+
+    def test_legacy_selector_from_fill_rejected(self):
+        """The old `fill: {selector, from}` shape must fail validation."""
+        schema = _load_schema()
+        data = self._minimal_broker({"fill": {"selector": "#x", "from": "full_name"}})
+        with pytest.raises(jsonschema.ValidationError):
+            jsonschema.validate(data, schema)
+
+    def test_dict_fill_accepted(self):
+        """The standard `fill: {selector: value}` shape is the only one accepted."""
+        schema = _load_schema()
+        data = self._minimal_broker({"fill": {"#x": "${full_name}"}})
+        jsonschema.validate(data, schema)
+
+    def test_captcha_short_sitekey_rejected(self):
+        """Placeholder sitekeys (like '6Lc...') must fail the minLength check."""
+        schema = _load_schema()
+        data = self._minimal_broker(
+            {"solve_captcha": {"type": "recaptcha-v2", "site_key": "6Lc..."}}
+        )
+        with pytest.raises(jsonschema.ValidationError):
+            jsonschema.validate(data, schema)
+
+    def test_captcha_legacy_sitekey_key_rejected(self):
+        """The misspelled `sitekey` (no underscore) must fail; only `site_key` allowed."""
+        schema = _load_schema()
+        data = self._minimal_broker(
+            {"solve_captcha": {"type": "recaptcha-v2", "sitekey": "live-key-xxxxxxxx"}}
+        )
+        with pytest.raises(jsonschema.ValidationError):
+            jsonschema.validate(data, schema)
+
+    def test_step_unknown_property_rejected(self):
+        """Steps reject unknown top-level keys to catch typos like `fil` for `fill`."""
+        schema = _load_schema()
+        data = self._minimal_broker({"unknown_action": "value"})
+        with pytest.raises(jsonschema.ValidationError):
+            jsonschema.validate(data, schema)
+
+
+class TestDisabledBrokers:
+    """A5/A6: known-broken brokers carry `disabled: true` and are filtered by default."""
+
+    def test_disabled_brokers_excluded_by_default(self):
+        from openeraseme.registry.loader import load_all_brokers
+
+        active = load_all_brokers()
+        assert not any(b.disabled for b in active), (
+            "load_all_brokers() must skip disabled brokers by default"
+        )
+
+    def test_include_disabled_returns_everything(self):
+        from openeraseme.registry.loader import load_all_brokers
+
+        active = load_all_brokers()
+        all_brokers = load_all_brokers(include_disabled=True)
+        assert len(all_brokers) >= len(active)
+
+    def test_known_disabled_brokers_present(self):
+        """beenverified-us, spokeo-eu, whitepages have unverified sitekeys."""
+        from openeraseme.registry.loader import load_all_brokers
+
+        all_brokers = load_all_brokers(include_disabled=True)
+        by_id = {b.id: b for b in all_brokers}
+        for broker_id in ("beenverified-us", "spokeo-eu", "whitepages"):
+            assert broker_id in by_id, f"{broker_id} missing from registry"
+            assert by_id[broker_id].disabled, f"{broker_id} should be disabled"
+            assert by_id[broker_id].notes, f"{broker_id} should explain why it's disabled"

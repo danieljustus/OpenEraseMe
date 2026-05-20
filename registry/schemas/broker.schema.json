@@ -97,8 +97,11 @@
                 "properties": {
                   "steps": {
                     "type": "array",
-                    "items": { "type": "object" }
-                  }
+                    "items": { "$ref": "#/$defs/formStep" }
+                  },
+                  "timeout_seconds": { "type": "number", "minimum": 1 },
+                  "rate_limit_delay": { "type": "number", "minimum": 0 },
+                  "headless": { "type": "boolean" }
                 },
                 "required": ["steps"]
               }
@@ -117,6 +120,54 @@
         "human_required_keywords": { "type": "array", "items": { "type": "string" } }
       }
     },
+    "disabled": {
+      "type": "boolean",
+      "default": false,
+      "description": "When true, this broker is excluded from default plans and listings. Use when the broker entry is incomplete or known-broken (e.g. unverified CAPTCHA sitekey). Pair with notes explaining the reason."
+    },
     "notes": { "type": "string" }
+  },
+  "$defs": {
+    "formStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "description": "One step in a Playwright form_spec. Standard DSL: fill/select keys map CSS selector -> value (use ${field_name} template syntax to interpolate identity fields).",
+      "properties": {
+        "goto": { "type": "string", "description": "URL to navigate to. Use '.' for the form's own URL." },
+        "fill": {
+          "type": "object",
+          "description": "CSS selector -> value mapping. Use ${full_name}, ${email} etc. for identity interpolation. Keys must look like CSS selectors (start with #, ., [, *, or a tag name) — the legacy {selector, from} shape is rejected.",
+          "additionalProperties": { "type": "string" },
+          "propertyNames": { "pattern": "[#.\\[]" },
+          "minProperties": 1
+        },
+        "select": {
+          "type": "object",
+          "description": "CSS selector -> option value mapping (for <select> elements). Same key constraints as `fill`.",
+          "additionalProperties": { "type": "string" },
+          "propertyNames": { "pattern": "[#.\\[]" },
+          "minProperties": 1
+        },
+        "click": { "type": "string", "description": "CSS selector to click." },
+        "wait_for": { "type": "string", "description": "CSS selector to wait for." },
+        "wait_seconds": { "type": "number", "minimum": 0 },
+        "screenshot": { "type": "string", "description": "Screenshot file label (no extension)." },
+        "assert_text": { "type": "string", "description": "Text that must appear on the page." },
+        "solve_captcha": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": { "type": "string", "enum": ["recaptcha-v2", "recaptcha-v3", "hcaptcha", "turnstile"] },
+            "site_key": { "type": "string", "minLength": 8, "description": "The CAPTCHA site key embedded in the broker's form. Must be a real key, not a placeholder." },
+            "provider": { "type": "string", "enum": ["capsolver", "2captcha", "anticaptcha"] },
+            "action": { "type": "string", "description": "reCAPTCHA v3 action parameter." },
+            "min_score": { "type": "number", "minimum": 0, "maximum": 1, "description": "reCAPTCHA v3 minimum required score (0..1)." },
+            "is_invisible": { "type": "boolean", "description": "True for invisible CAPTCHAs (hCaptcha, reCAPTCHA invisible)." }
+          },
+          "required": ["type", "site_key"]
+        }
+      }
+    }
   }
 }

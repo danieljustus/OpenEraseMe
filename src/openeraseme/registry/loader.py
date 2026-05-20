@@ -83,7 +83,14 @@ def load_all_brokers(
     jurisdiction: str | None = None,
     priority: str | None = None,
     category: str | None = None,
+    include_disabled: bool = False,
 ) -> list[Broker]:
+    """Load and filter brokers from the registry.
+
+    Disabled brokers (``disabled: true`` in YAML) are excluded by default
+    so the default plan never targets known-broken broker entries.
+    Pass ``include_disabled=True`` to get everything (used by ``brokers list``).
+    """
     if registry_dir is None:
         registry_dir = _registry_dir() / "brokers"
 
@@ -104,11 +111,10 @@ def load_all_brokers(
             brokers.append(broker)
         _BROKER_CACHE[cache_key] = brokers
 
-    if not (jurisdiction or priority or category):
-        return brokers
-
     filtered: list[Broker] = []
     for broker in brokers:
+        if not include_disabled and broker.disabled:
+            continue
         if jurisdiction and jurisdiction not in broker.jurisdictions:
             continue
         if priority and broker.priority.value != priority:

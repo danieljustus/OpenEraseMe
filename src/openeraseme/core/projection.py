@@ -7,6 +7,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from openeraseme.core.db import get_connection
+from openeraseme.core.events import append_event
 
 
 def _parse_ts(value: str) -> datetime | None:
@@ -122,7 +123,12 @@ def rebuild_state(request_id: int) -> dict[str, Any]:
     return _accumulate_state(request_id, events)
 
 
-def upsert_state(request_id: int) -> dict[str, Any]:
+def upsert_state(request_id: int, *, commit: bool = True) -> dict[str, Any]:
+    """Recompute the projection for one request and write it.
+
+    When ``commit=False`` the caller is responsible for committing — used by
+    ``append_event_and_project()`` to bundle event + projection atomically.
+    """
     state = rebuild_state(request_id)
     conn = get_connection()
     conn.execute(
@@ -145,8 +151,47 @@ def upsert_state(request_id: int) -> dict[str, Any]:
             state["escalation_level"],
         ),
     )
-    conn.commit()
+    if commit:
+        conn.commit()
     return state
+
+
+def append_event_and_project(
+    request_id: int,
+    event_type: str,
+    *,
+    payload: dict[str, Any] | None = None,
+    source: str = "system",
+    occurred_at: str | None = None,
+) -> tuple[int, dict[str, Any]]:
+    """Append an event and update its projection in one atomic transaction.
+
+    Both the ``request_events`` INSERT and the ``request_state`` upsert happen
+    inside a single SQLite transaction. If the projection step raises, the
+    event INSERT is rolled back as well — so the event log and the projection
+    can never diverge mid-write.
+
+    Returns
+    -------
+    tuple[int, dict[str, Any]]
+        The newly created event id and the resulting projection state.
+    """
+    conn = get_connection()
+    try:
+        eid = append_event(
+            request_id,
+            event_type,
+            payload=payload,
+            source=source,
+            occurred_at=occurred_at,
+            commit=False,
+        )
+        state = upsert_state(request_id, commit=False)
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    return eid, state
 
 
 def rebuild_all_states() -> int:

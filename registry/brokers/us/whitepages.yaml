@@ -8,6 +8,7 @@ laws:
   - CCPA
 data_sensitivity: 4
 priority: high
+disabled: true
 
 opt_out:
   - type: web_form
@@ -22,7 +23,8 @@ opt_out:
             "#phone": "${phone_number}"
         - solve_captcha:
             type: recaptcha-v2
-            site_key: "6Lc..."
+            site_key: NEEDS_RESEARCH_REPLACE_WITH_REAL_SITEKEY
+            provider: capsolver
         - click: "#submit-request"
         - wait_for: ".confirmation-message"
         - screenshot: "result"
@@ -38,3 +40,12 @@ verification:
     - "not found"
   human_required_keywords:
     - "additional information"
+
+notes: |
+  Disabled until the live reCAPTCHA site_key is captured from
+  https://www.whitepages.com/suppression_requests. The previous
+  placeholder ("6Lc...") was not a real key; CapSolver would fail.
+  Also requires a phone_number identity field which is optional in
+  the profile schema. To re-enable: inspect the form's DOM for the
+  data-sitekey attribute, replace NEEDS_RESEARCH_REPLACE_WITH_REAL_SITEKEY
+  above, and set disabled: false.

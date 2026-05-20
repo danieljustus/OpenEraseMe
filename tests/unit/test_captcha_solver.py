@@ -179,13 +179,17 @@ class TestPlaywrightIntegration:
 
         step = FormStep(
             solve_captcha={
+                "type": "recaptcha-v3",
                 "provider": "capsolver",
-                "site_key": "6Lc123",
+                "site_key": "6Lc12345-real-key",
                 "action": "verify",
-                "min_score": "0.3",
+                "min_score": 0.3,
             }
         )
         data = step.model_dump(exclude_none=True)
         assert "solve_captcha" in data
+        assert data["solve_captcha"]["type"] == "recaptcha-v3"
         assert data["solve_captcha"]["provider"] == "capsolver"
-        assert data["solve_captcha"]["site_key"] == "6Lc123"
+        assert data["solve_captcha"]["site_key"] == "6Lc12345-real-key"
+        assert data["solve_captcha"]["action"] == "verify"
+        assert data["solve_captcha"]["min_score"] == 0.3

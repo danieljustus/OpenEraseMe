@@ -4,9 +4,9 @@ import logging
 from typing import Any
 
 from openeraseme.core.db import get_connection
-from openeraseme.core.events import append_event, get_removal_request
+from openeraseme.core.events import get_removal_request
 from openeraseme.core.identity import load_profile, profile_exists
-from openeraseme.core.projection import upsert_state
+from openeraseme.core.projection import append_event_and_project
 from openeraseme.core.templating import render_template
 
 logger = logging.getLogger(__name__)
@@ -262,7 +262,7 @@ def draft_reply(
     conn.commit()
     draft_id = cur.lastrowid
 
-    append_event(
+    append_event_and_project(
         request_id,
         "REPLY_DRAFTED",
         payload={
@@ -274,7 +274,6 @@ def draft_reply(
         },
         source="system",
     )
-    upsert_state(request_id)
 
     return {
         "draft_id": draft_id,
@@ -373,7 +372,7 @@ def send_reply(
     )
     conn.commit()
 
-    append_event(
+    append_event_and_project(
         request_id,
         "REBUTTAL_SENT",
         payload={
@@ -384,7 +383,6 @@ def send_reply(
         },
         source="system",
     )
-    upsert_state(request_id)
 
     return {
         "success": True,

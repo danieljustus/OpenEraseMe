@@ -10,6 +10,7 @@ laws:
   - GDPR
 data_sensitivity: 4
 priority: medium
+disabled: true
 
 opt_out:
   - type: web_form
@@ -24,7 +25,8 @@ opt_out:
             "#gdpr-country": "${address_country_0}"
         - solve_captcha:
             type: recaptcha-v2
-            site_key: "6Lc..."
+            site_key: NEEDS_RESEARCH_REPLACE_WITH_REAL_SITEKEY
+            provider: capsolver
         - click: "#gdpr-submit"
         - wait_for: ".success-message"
         - screenshot: "result"
@@ -40,3 +42,10 @@ verification:
     - "additional information"
   human_required_keywords:
     - "manual review"
+
+notes: |
+  Disabled until the live reCAPTCHA site_key is captured from
+  https://www.spokeo.com/gdpr-optout. The previous placeholder
+  ("6Lc...") was not a real key; CapSolver would fail. To re-enable:
+  replace NEEDS_RESEARCH_REPLACE_WITH_REAL_SITEKEY with the real key
+  and set disabled: false.

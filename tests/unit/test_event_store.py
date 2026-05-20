@@ -18,7 +18,12 @@ from openeraseme.core.events import (
     list_campaigns,
     list_removal_requests,
 )
-from openeraseme.core.projection import rebuild_all_states, rebuild_state, upsert_state
+from openeraseme.core.projection import (
+    append_event_and_project,
+    rebuild_all_states,
+    rebuild_state,
+    upsert_state,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -222,3 +227,88 @@ class TestProjection:
         append_event(r2, "PLANNED")
         count = rebuild_all_states()
         assert count == 2
+
+
+class TestAtomicAppendAndProject:
+    """A1: event + projection must be one atomic SQLite transaction."""
+
+    def test_happy_path_writes_both(self):
+        create_campaign("c")
+        rid = create_removal_request(broker_id="b", campaign_id="c", jurisdiction="GDPR")
+        eid, state = append_event_and_project(rid, "SENT", payload={"to": "x@y.com"})
+
+        assert eid > 0
+        assert state["current_status"] == "AWAITING_ACK"
+
+        # Both writes are visible
+        conn = get_connection()
+        events = conn.execute(
+            "SELECT id FROM request_events WHERE request_id = ?", (rid,)
+        ).fetchall()
+        assert len(events) == 1
+
+        row = conn.execute(
+            "SELECT current_status FROM request_state WHERE request_id = ?", (rid,)
+        ).fetchone()
+        assert row["current_status"] == "AWAITING_ACK"
+
+    def test_projection_failure_rolls_back_event(self, monkeypatch):
+        """Simulate a crash between INSERT into request_events and request_state.
+        The atomic helper must roll back BOTH so event log and projection never diverge.
+        """
+        create_campaign("c")
+        rid = create_removal_request(broker_id="b", campaign_id="c", jurisdiction="GDPR")
+
+        conn = get_connection()
+        before = conn.execute(
+            "SELECT COUNT(*) AS n FROM request_events WHERE request_id = ?", (rid,)
+        ).fetchone()["n"]
+
+        from openeraseme.core import projection
+
+        original_upsert = projection.upsert_state
+
+        def boom(*args, **kwargs):
+            raise RuntimeError("simulated crash during projection write")
+
+        monkeypatch.setattr(projection, "upsert_state", boom)
+
+        with pytest.raises(RuntimeError, match="simulated crash"):
+            append_event_and_project(rid, "SENT", payload={"to": "x@y.com"})
+
+        # Event must be rolled back, no row in request_events for this attempt.
+        after = conn.execute(
+            "SELECT COUNT(*) AS n FROM request_events WHERE request_id = ?", (rid,)
+        ).fetchone()["n"]
+        assert after == before, "Event was committed despite projection failure"
+
+        # No stale projection row either.
+        state_row = conn.execute(
+            "SELECT request_id FROM request_state WHERE request_id = ?", (rid,)
+        ).fetchone()
+        assert state_row is None
+
+        # Restore and confirm a subsequent valid call still works.
+        monkeypatch.setattr(projection, "upsert_state", original_upsert)
+        eid, state = append_event_and_project(rid, "SENT", payload={"to": "x@y.com"})
+        assert eid > 0
+        assert state["current_status"] == "AWAITING_ACK"
+
+    def test_invalid_event_type_no_event_no_state(self):
+        """Invalid event type raises BEFORE any DB write; nothing is persisted."""
+        create_campaign("c")
+        rid = create_removal_request(broker_id="b", campaign_id="c", jurisdiction="GDPR")
+
+        with pytest.raises(ValueError, match="Unknown event type"):
+            append_event_and_project(rid, "NOT_A_REAL_EVENT")
+
+        conn = get_connection()
+        events = conn.execute(
+            "SELECT COUNT(*) AS n FROM request_events WHERE request_id = ?", (rid,)
+        ).fetchone()["n"]
+        assert events == 0
+
+        state_row = conn.execute(
+            "SELECT request_id FROM request_state WHERE request_id = ?", (rid,)
+        ).fetchone()
+        assert state_row is None

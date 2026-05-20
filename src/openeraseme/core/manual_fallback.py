@@ -301,12 +301,12 @@ def create_manual_task(
     conn.commit()
     task_id: int = cur.lastrowid  # type: ignore[assignment]
 
-    # Append HUMAN_ACTION_REQUIRED event
+    # Append HUMAN_ACTION_REQUIRED event + atomic projection update
     if request_id:
         try:
-            from openeraseme.core.events import append_event
+            from openeraseme.core.projection import append_event_and_project
 
-            append_event(
+            append_event_and_project(
                 request_id,
                 "HUMAN_ACTION_REQUIRED",
                 payload={
@@ -364,13 +364,13 @@ def resume_from_manual(
     )
     conn.commit()
 
-    # Append NOTE_ADDED event for the request
+    # Append NOTE_ADDED event for the request + atomic projection update
     request_id = row["request_id"]
     if request_id:
         try:
-            from openeraseme.core.events import append_event
+            from openeraseme.core.projection import append_event_and_project
 
-            append_event(
+            append_event_and_project(
                 request_id,
                 "NOTE_ADDED",
                 payload={
