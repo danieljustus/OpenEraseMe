@@ -30,6 +30,7 @@ dependencies = [
     "jsonschema>=4.20.0",
     "structlog>=24.0.0",
     "email-validator>=2.1.0",
+    "aiosmtplib>=3.0.0",
 ]
 
 [project.optional-dependencies]
@@ -40,9 +41,6 @@ dev = [
     "mypy>=1.9.0",
     "pre-commit>=3.7.0",
     "keyrings.alt>=5.0.0",
-]
-email = [
-    "aiosmtplib>=3.0.0",
 ]
 web = [
     "playwright>=1.44.0",
