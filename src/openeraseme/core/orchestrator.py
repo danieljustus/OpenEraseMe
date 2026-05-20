@@ -16,6 +16,8 @@ from openeraseme.core.projection import rebuild_all_states, upsert_state
 from openeraseme.registry.loader import load_all_brokers
 from openeraseme.registry.schema import Broker
 
+_BATCH_LIMIT = 10
+
 
 def plan_campaign(
     *,
@@ -189,6 +191,146 @@ def execute_campaign(
             dry_run=dry_run,
         )
         results.append(result)
+
+    return {
+        "campaign_id": campaign_id,
+        "total_planned": len(requests),
+        "batch_size": len(batch),
+        "results": results,
+    }
+
+
+async def execute_campaign_async(
+    campaign_id: str,
+    *,
+    batch_size: int = _BATCH_LIMIT,
+    dry_run: bool = False,
+    smtp_skip_tls: bool = False,
+) -> dict[str, Any]:
+    """Execute a campaign using direct SMTP for batched sending.
+
+    Collects all PLANNED removal requests, renders email templates,
+    and sends them over a single SMTP connection instead of spawning
+    a Himalaya CLI process per message.
+
+    Parameters
+    ----------
+    campaign_id : str
+        The campaign to execute.
+    batch_size : int
+        Max number of messages to send (default 10).
+    dry_run : bool
+        When true, renders templates without sending.
+    smtp_skip_tls : bool
+        When true, disables STARTTLS (for testing with local SMTP
+        servers that don't support TLS).
+
+    Returns
+    -------
+    dict[str, Any]
+        Campaign execution summary with results per request.
+    """
+    requests = list_removal_requests(campaign_id=campaign_id, status="PLANNED")
+    batch = requests[:batch_size]
+
+    from openeraseme.adapters.email.himalaya import (
+        EmailMessage,
+        SmtpConfig,
+        load_smtp_config,
+        send_messages_batch,
+    )
+    from openeraseme.core.templating import render_template
+
+    if dry_run:
+        results: list[dict[str, Any]] = []
+        for req in batch:
+            r = execute_request(req["id"], dry_run=True)
+            results.append(r)
+        return {
+            "campaign_id": campaign_id,
+            "total_planned": len(requests),
+            "batch_size": len(batch),
+            "results": results,
+        }
+
+    smtp_config = load_smtp_config()
+    if smtp_skip_tls:
+        smtp_config = SmtpConfig(
+            host=smtp_config.host,
+            port=smtp_config.port,
+            username=smtp_config.username,
+            password=smtp_config.password,
+            use_tls=False,
+            from_addr=smtp_config.from_addr,
+        )
+
+    email_messages: list[EmailMessage] = []
+    request_map: dict[str, int] = {}
+
+    for req in batch:
+        req_id = req["id"]
+        broker_name = req["broker_id"]
+        events = get_events(req_id)
+        last_event = events[-1] if events else {}
+        payload = last_event.get("payload_json", {})
+        channel_endpoint = payload.get("endpoint", "")
+        template_id = req.get("template_id", "")
+
+        if not channel_endpoint:
+            continue
+
+        body = render_template(
+            template_id,
+            broker_name=broker_name,
+        )
+
+        email_messages.append(
+            EmailMessage(
+                to=channel_endpoint,
+                subject=f"Data Deletion Request \u2014 {broker_name}",
+                body=body,
+            )
+        )
+        request_map[channel_endpoint] = req_id
+
+    if not email_messages:
+        return {
+            "campaign_id": campaign_id,
+            "total_planned": len(requests),
+            "batch_size": len(batch),
+            "results": [],
+        }
+
+    send_results = await send_messages_batch(
+        email_messages,
+        smtp_config=smtp_config,
+    )
+
+    results = []
+    for sr in send_results:
+        to_addr = sr["to"]
+        req_id = request_map.get(to_addr)
+
+        if sr["success"] and req_id is not None:
+            append_event(
+                req_id,
+                "SENT",
+                payload={
+                    "to": to_addr,
+                    "account": "smtp",
+                    "expected_response_days": 30,
+                },
+            )
+            upsert_state(req_id)
+        elif req_id is not None:
+            append_event(
+                req_id,
+                "SEND_FAILED",
+                payload={"error": sr.get("error", ""), "to": to_addr},
+            )
+            upsert_state(req_id)
+
+        results.append(sr)
 
     return {
         "campaign_id": campaign_id,

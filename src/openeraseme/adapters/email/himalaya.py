@@ -1,11 +1,16 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
+import os
 import shutil
 import subprocess
 from dataclasses import dataclass, field
 from datetime import datetime
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.utils import formatdate
 from pathlib import Path
 from typing import Any
 
@@ -142,6 +147,155 @@ def list_messages(
         envelopes.append(env)
 
     return envelopes
+
+
+@dataclass
+class SmtpConfig:
+    host: str = "localhost"
+    port: int = 587
+    username: str = ""
+    password: str = ""
+    use_tls: bool = True
+    from_addr: str = ""
+
+
+def load_smtp_config() -> SmtpConfig:
+    """Load SMTP configuration from environment variables.
+
+    Reads:
+        OPENERASEME_SMTP_HOST       (default: localhost)
+        OPENERASEME_SMTP_PORT       (default: 587)
+        OPENERASEME_SMTP_USER       (default: "")
+        OPENERASEME_SMTP_PASSWORD   (default: "")
+        OPENERASEME_SMTP_TLS        (default: 1)
+        OPENERASEME_SMTP_FROM       (default: "")
+    """
+    return SmtpConfig(
+        host=os.environ.get("OPENERASEME_SMTP_HOST", "localhost"),
+        port=int(os.environ.get("OPENERASEME_SMTP_PORT", "587")),
+        username=os.environ.get("OPENERASEME_SMTP_USER", ""),
+        password=os.environ.get("OPENERASEME_SMTP_PASSWORD", ""),
+        use_tls=os.environ.get("OPENERASEME_SMTP_TLS", "1").lower() in ("1", "true", "yes"),
+        from_addr=os.environ.get("OPENERASEME_SMTP_FROM", ""),
+    )
+
+
+@dataclass
+class EmailMessage:
+    to: str
+    subject: str
+    body: str
+    cc: str | None = None
+    bcc: str | None = None
+
+
+def _build_mime(msg: EmailMessage, from_addr: str) -> str:
+    mime = MIMEMultipart("mixed")
+    mime["From"] = from_addr
+    mime["To"] = msg.to
+    mime["Subject"] = msg.subject
+    mime["Date"] = formatdate(localtime=True)
+    if msg.cc:
+        mime["Cc"] = msg.cc
+
+    part = MIMEText(msg.body, "plain")
+    mime.attach(part)
+
+    return mime.as_string()
+
+
+async def send_messages_batch(
+    messages: list[EmailMessage],
+    *,
+    smtp_config: SmtpConfig | None = None,
+) -> list[dict[str, Any]]:
+    """Send multiple emails over a single SMTP connection.
+
+    Opens one SMTP connection, sends all messages over it,
+    then closes. Failed sends are collected per-message without
+    aborting the batch.
+
+    Parameters
+    ----------
+    messages : list[EmailMessage]
+        The email messages to send.
+    smtp_config : SmtpConfig | None
+        SMTP connection parameters. Falls back to env vars when ``None``.
+
+    Returns
+    -------
+    list[dict[str, Any]]
+        One dict per input message with keys ``success``, ``to``,
+        ``subject``, and optionally ``error``.
+    """
+    import aiosmtplib
+
+    if smtp_config is None:
+        smtp_config = load_smtp_config()
+
+    from_addr = smtp_config.from_addr
+
+    results: list[dict[str, Any]] = []
+    if not messages:
+        return results
+
+    try:
+        smtp = aiosmtplib.SMTP(
+            hostname=smtp_config.host,
+            port=smtp_config.port,
+            timeout=30,
+        )
+
+        await smtp.connect()
+
+        if smtp_config.use_tls:
+            await smtp.starttls()
+
+        if smtp_config.username and smtp_config.password:
+            await smtp.login(smtp_config.username, smtp_config.password)
+
+        for msg in messages:
+            try:
+                mime_text = _build_mime(msg, from_addr)
+                recipients = [msg.to]
+                if msg.cc:
+                    recipients.append(msg.cc)
+                if msg.bcc:
+                    recipients.append(msg.bcc)
+
+                await smtp.sendmail(from_addr, recipients, mime_text)
+                results.append(
+                    {
+                        "success": True,
+                        "to": msg.to,
+                        "subject": msg.subject,
+                    }
+                )
+            except Exception as e:
+                logger.warning("Failed to send to %s: %s", msg.to, e)
+                results.append(
+                    {
+                        "success": False,
+                        "to": msg.to,
+                        "subject": msg.subject,
+                        "error": str(e),
+                    }
+                )
+
+        await smtp.quit()
+    except Exception as e:
+        logger.error("SMTP connection failed: %s", e)
+        for msg in messages:
+            results.append(
+                {
+                    "success": False,
+                    "to": msg.to,
+                    "subject": msg.subject,
+                    "error": str(e),
+                }
+            )
+
+    return results
 
 
 def send_message(
