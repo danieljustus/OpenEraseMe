@@ -2,7 +2,7 @@
 
 **Automated data broker removal tool — close your accounts, erase your data.**
 
-> **Alpha** — This project is in early development. APIs may change and some features are incomplete.
+> **Beta** — Core features are stable and tested. Some advanced features (web-form CAPTCHA solving, DPA auto-filing) require manual setup or are event-flagged only.
 
 [![CI](https://img.shields.io/github/actions/workflow/status/danieljustus/OpenEraseMe/ci.yml?branch=main&label=CI&logo=github)](https://github.com/danieljustus/OpenEraseMe/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -11,18 +11,24 @@
 OpenEraseMe helps you exercise your GDPR/CCPA right to erasure against
 data brokers. It provides:
 
-- **A curated registry** of 30+ data brokers with opt-out processes documented
-- **CLI tools** to plan, send, and track removal requests
+- **A curated registry** of 74 data brokers with opt-out processes documented
+- **CLI tools** to plan, send, track, and triage removal requests
 - **Skills** for LLM-powered agents (Claude Code, OpenClaw, etc.)
-- **Lifecycle management** with deadline tracking, reminders, and escalation
+- **Lifecycle management** with deadline tracking, reminders, escalation, and re-scans
 
 ## Features
 
-- **Curated broker registry** with YAML-based definitions for 30+ data brokers, including opt-out URLs, required account identifiers, contact methods (web forms, email, API), and escalation paths for non-compliance.
-- **CLI automation** to plan removal campaigns, send opt-out requests in batches, track progress per broker, and monitor results over time from the terminal.
-- **Deadline tracking** with automatic 30-day GDPR deadline monitoring and configurable reminders. Escalation workflows trigger when brokers miss the legal response window.
+- **Curated broker registry** with YAML-based definitions for 74 data brokers across EU (35), UK (4), and US (33), including opt-out URLs, required account identifiers, contact methods (web forms, email), and verification keywords.
+- **Event-sourced architecture** with an append-only SQLite event store, state projections, and full audit trail for every removal request.
+- **CLI automation** with 30+ commands to plan removal campaigns, send opt-out requests in batches, track progress, monitor deadlines, and triage broker replies from the terminal.
+- **Web-form automation** via Playwright for brokers that only accept opt-outs through web forms, including form-filling, CAPTCHA detection, and screenshot capture.
+- **Inbox triage** via IMAP polling to fetch broker replies, classify them with an LLM (Claude), and generate jurisdiction-aware rebuttals for rejections.
+- **Deadline tracking** with automatic jurisdiction-aware deadline monitoring (GDPR: 30 days, CCPA: 45 days). The tick engine checks daily for overdue requests and triggers reminders with exponential backoff.
+- **Escalation workflows** that flag requests for DPA complaints after brokers miss the legal response window.
 - **LLM agent skills** as ready-made skill files for Claude Code, OpenClaw, and other LLM-powered coding agents. These skills let AI assistants work with the tool on your behalf.
-- **Jurisdiction-aware workflows** with support for GDPR (Europe) and CCPA (California) erasure rights, including jurisdiction-specific templates, timelines, and legal references.
+- **Jurisdiction-aware workflows** with support for GDPR (Europe), CCPA (California), CPRA, LGPD, and PIPEDA erasure rights, including jurisdiction-specific templates, timelines, and legal references.
+- **Scheduler integration** that generates cron, launchd, or systemd configurations to run the tick engine, inbox polling, and quarterly re-scans automatically.
+- **Dashboard and reports** for campaign analytics, jurisdiction breakdowns, and GDPR-compliant record-keeping exports.
 
 ## Install
 
@@ -69,7 +75,7 @@ openeraseme init-profile
 openeraseme brokers list --jurisdiction GDPR
 
 # Show details for a specific broker
-openeraseme brokers show --name AcmeDataCorp
+openeraseme brokers show --name spokeo
 ```
 
 ### Demo
@@ -82,41 +88,92 @@ $ openeraseme brokers list --jurisdiction GDPR
 ┏━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓
 ┃ Name         ┃ Website                     ┃ Jurisdiction  ┃
 ┡━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩
-│ AcmeDataCorp │ https://acmedata.example    │ GDPR, CCPA    │
-│ BrokerB      │ https://brokerb.example     │ GDPR          │
-│ DataVault    │ https://datavault.example   │ CCPA          │
+│ Spokeo       │ https://www.spokeo.com      │ CCPA          │
+│ Intelius     │ https://www.intelius.com    │ CCPA          │
+│ Acxiom (EU)  │ https://www.acxiom.com      │ GDPR          │
+│ Schufa       │ https://www.schufa.de       │ GDPR          │
 └──────────────┴─────────────────────────────┴───────────────┘
 
-$ openeraseme plan --jurisdiction GDPR --max 3
-✓ Plan created: 3 brokers selected
+$ openeraseme plan create --campaign initial --jurisdiction GDPR --max 5
+✓ Plan created: 5 brokers selected
   Campaign: initial
-  Output: ~/.config/openeraseme/campaigns/initial/plan.json
 
 $ openeraseme status
 Campaign: initial
-┏━━━━━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━┓
-┃ Broker       ┃ Status   ┃ Deadline             ┃
-┡━━━━━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━┩
-│ AcmeDataCorp │ pending  │ 2026-06-20 (30 days) │
-│ BrokerB      │ pending  │ 2026-06-20 (30 days) │
-│ DataVault    │ sent     │ 2026-06-20 (30 days) │
-└──────────────┴──────────┴──────────────────────┘
+┏━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Broker      ┃ Status      ┃ Deadline             ┃
+┡━━━━━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━┩
+│ Acxiom (EU) │ planned     │ —                    │
+│ Schufa      │ planned     │ —                    │
+│ Experian EU │ planned     │ —                    │
+│ Equifax EU  │ planned     │ —                    │
+│ Creditreform│ planned     │ —                    │
+└─────────────┴─────────────┴──────────────────────┘
 ```
 
 ### Planning and execution
 
 ```bash
 # Create a removal plan for GDPR brokers (limit to 10)
-openeraseme plan --jurisdiction GDPR --max 10
+openeraseme plan create --campaign initial --jurisdiction GDPR --max 10
 
-# Execute the plan in batches (respects rate limits)
-openeraseme execute --campaign initial --batch-size 5 --delay 30
+# Review the plan before sending
+openeraseme plan show --campaign initial
+
+# Execute the plan in batches (respects rate limits, requires consent)
+openeraseme execute --campaign initial --batch-size 5 --delay 30 --yes
 
 # Check overall campaign progress
 openeraseme status
 
-# View deadline calendar and upcoming reminders
+# View deadline calendar and upcoming tick actions
 openeraseme calendar --weeks 4
+```
+
+### Inbox triage (requires `[triage]` extra)
+
+```bash
+# Poll your IMAP inbox for broker replies
+openeraseme poll-inbox --username your@email.com
+
+# Classify a broker reply via LLM
+openeraseme classify-reply <request_id>
+
+# Generate a jurisdiction-aware rebuttal for a rejection
+openeraseme generate-rebuttal <request_id>
+```
+
+### Web-form automation (requires `[web]` extra)
+
+```bash
+# Run a broker's web-form opt-out via Playwright
+openeraseme run-web-form <broker_id>
+
+# List manual fallback tasks for forms that couldn't be automated
+openeraseme manual-tasks list
+
+# Mark a manual task as completed
+openeraseme manual-tasks complete <task_id>
+```
+
+### Lifecycle and maintenance
+
+```bash
+# Run the tick engine (checks deadlines, reminders, escalations)
+openeraseme tick --dry-run
+openeraseme tick
+
+# Generate scheduler configs (cron / launchd / systemd)
+openeraseme generate-scheduler --output ./schedules
+
+# Install schedules
+openeraseme schedule install ./schedules
+
+# Generate a dashboard report
+openeraseme generate-dashboard
+
+# Export campaign data for GDPR record-keeping
+openeraseme export --format json --output campaign.json
 ```
 
 ### Other commands
@@ -125,11 +182,41 @@ openeraseme calendar --weeks 4
 # Validate registry YAML files against the schema
 openeraseme validate
 
-# Export campaign data for record-keeping
-openeraseme export --format json --output campaign.json
+# Show event history for a request
+openeraseme events show <request_id>
+
+# List all removal requests
+openeraseme requests list --status pending
+
+# Grant consent for destructive operations
+openeraseme grant execute --ttl 3600
 ```
 
 Run `openeraseme --help` for a full list of commands and options.
+
+## Architecture
+
+OpenEraseMe uses an **event-sourced architecture** built on SQLite:
+
+```
+┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│   CLI /     │────▶│   Event      │────▶│  Request    │
+│   Skills    │     │   Store      │     │  State      │
+└─────────────┘     │  (SQLite)    │     │ (Projection)│
+                    └──────────────┘     └─────────────┘
+                           │
+                    ┌──────┴──────┐
+                    ▼             ▼
+            ┌──────────┐   ┌──────────┐
+            │  Tick    │   │  Reports │
+            │  Engine  │   │ / Export │
+            └──────────┘   └──────────┘
+```
+
+- **Event Store**: Append-only log of all actions (planned, sent, ack, reminder, deadline reached, etc.)
+- **State Projection**: Rebuilds the current state of every request from events
+- **Tick Engine**: Daily scan for deadlines, reminders, and escalations
+- **Triage**: LLM-based classification of broker replies with jurisdiction-aware rebuttal generation
 
 ## Development
 
@@ -159,7 +246,20 @@ All three checks run in CI on every push and pull request to the `main` branch.
 
 ### Project structure
 
-The codebase uses a `src` layout under `src/openeraseme/`, with broker definitions in YAML under `registry/brokers/` and their JSON schema in `registry/schemas/`.
+```
+src/openeraseme/
+  cli/           — Typer CLI application
+  core/          — Event store, projections, tick engine, templating, scheduler
+  registry/      — Broker loader, schema validation
+  services/      — CLI command handlers
+  adapters/      — Web (Playwright), Triage (Claude), Email (SMTP/IMAP)
+registry/
+  brokers/       — YAML broker definitions (eu/, uk/, us/)
+  laws/          — Jinja2 legal templates (GDPR, CCPA, rebuttals)
+  schemas/       — JSON Schema for broker validation
+skills/          — LLM agent skill files (Claude Code, OpenClaw)
+examples/        — Integration examples for Claude Code, OpenClaw, cron
+```
 
 ## Documentation
 
