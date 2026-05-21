@@ -36,3 +36,18 @@ token.json
 
 # MCP / agent scratch
 .playwright-mcp/
+
+# Claude Code local settings (contains per-user paths)
+.claude/settings.local.json
+
+# Tool caches
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# Distribution artifacts
+dist/
+build/
+
+# Local environment file
+.env
