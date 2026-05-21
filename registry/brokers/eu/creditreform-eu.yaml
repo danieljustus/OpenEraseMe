@@ -1,0 +1,48 @@
+id: creditreform-eu
+name: Creditreform
+website: https://www.creditreform.de
+category: credit
+jurisdictions:
+  - DE
+  - AT
+  - CH
+  - EU
+laws:
+  - GDPR
+data_sensitivity: 5
+priority: high
+
+opt_out:
+  - type: email
+    endpoint: datenschutz@verband.creditreform.de
+    template: gdpr-art17
+    locale: de
+    required_fields:
+      - full_name
+      - address
+      - email
+      - date_of_birth
+    supports_suppression: false
+    expected_response_days: 30
+
+verification:
+  ack_keywords:
+    - "bestätigen"
+    - "erhalten"
+    - "vorgangsnummer"
+    - "löschung"
+  rejection_keywords:
+    - "nicht verifizieren"
+    - "weitere Angaben erforderlich"
+  human_required_keywords:
+    - "ausweis"
+    - "identitätsnachweis"
+    - "legitimation"
+
+notes: |
+  Creditreform is Germany's largest business credit reporting network
+  with over 130 member companies. They maintain data on both businesses
+  and private individuals. Art. 17 GDPR deletion requests may be partially
+  rejected if data is required for legitimate creditor interests — in that
+  case, request Art. 21 restriction of processing instead.
+  Local member offices may need to be contacted separately.

@@ -1,0 +1,49 @@
+id: eyeota-eu
+name: Eyeota (Dun & Bradstreet)
+website: https://www.eyeota.com
+category: marketing
+jurisdictions:
+  - EU
+laws:
+  - GDPR
+data_sensitivity: 4
+priority: medium
+
+opt_out:
+  - type: email
+    endpoint: privacy@eyeota.com
+    template: gdpr-art17
+    locale: en
+    required_fields:
+      - full_name
+      - email
+    supports_suppression: true
+    expected_response_days: 30
+
+  - type: web_form
+    url: https://www.eyeota.com/privacy-portal/
+    form_spec:
+      steps:
+        - goto: .
+        - fill:
+            "input[name=email]": "${email}"
+        - click: "button[type=submit]"
+        - wait_for: ".success"
+        - screenshot: "result"
+      timeout_seconds: 30.0
+      rate_limit_delay: 1.5
+
+verification:
+  ack_keywords:
+    - "opt-out"
+    - "received"
+    - "request"
+  rejection_keywords:
+    - "not found"
+  human_required_keywords:
+    - "additional information"
+
+notes: |
+  Eyeota (acquired by Dun & Bradstreet) is a global audience data marketplace
+  operating across APAC, EU, and US, providing third-party audience segments
+  for programmatic advertising campaigns.

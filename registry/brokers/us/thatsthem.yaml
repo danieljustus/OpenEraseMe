@@ -1,0 +1,39 @@
+id: thatsthem-us
+name: ThatsThem
+website: https://thatsthem.com
+category: people-search
+jurisdictions:
+  - US
+laws:
+  - CCPA
+data_sensitivity: 3
+priority: medium
+
+opt_out:
+  - type: web_form
+    url: https://thatsthem.com/optout
+    form_spec:
+      steps:
+        - goto: .
+        - fill:
+            "input[name=email]": "${email}"
+        - click: "button[type=submit]"
+        - wait_for: ".optout-confirmation"
+        - screenshot: "result"
+      timeout_seconds: 45.0
+      rate_limit_delay: 2.0
+
+verification:
+  ack_keywords:
+    - "opt-out"
+    - "submitted"
+    - "removed"
+  rejection_keywords:
+    - "not found"
+    - "already opted out"
+  human_required_keywords:
+    - "contact us"
+
+notes: |
+  ThatsThem identifies records primarily by email address. The opt-out
+  suppresses all records associated with the submitted email.

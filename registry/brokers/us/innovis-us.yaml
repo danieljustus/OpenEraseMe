@@ -1,0 +1,56 @@
+id: innovis-us
+name: Innovis (CBC Innovis)
+website: https://www.innovis.com
+category: credit
+jurisdictions:
+  - US
+laws:
+  - CCPA
+data_sensitivity: 5
+priority: medium
+
+opt_out:
+  - type: web_form
+    url: https://www.innovis.com/personal/securityFreeze
+    form_spec:
+      steps:
+        - goto: .
+        - fill:
+            "input[name=first_name]": "${first_name}"
+            "input[name=last_name]": "${last_name}"
+            "input[name=dob]": "${date_of_birth}"
+            "input[name=ssn_last4]": "${ssn_last4}"
+            "input[name=address]": "${address}"
+            "input[name=email]": "${email}"
+        - click: "button[type=submit]"
+        - wait_for: ".confirmation"
+        - screenshot: "result"
+      timeout_seconds: 60.0
+      rate_limit_delay: 5.0
+
+  - type: email
+    endpoint: consumer-assistance@innovis.com
+    template: ccpa-deletion
+    locale: en
+    required_fields:
+      - full_name
+      - address
+      - email
+      - date_of_birth
+    supports_suppression: true
+    expected_response_days: 30
+
+verification:
+  ack_keywords:
+    - "opt-out"
+    - "freeze"
+    - "confirmation"
+  rejection_keywords:
+    - "cannot verify"
+  human_required_keywords:
+    - "documentation"
+
+notes: |
+  Innovis is sometimes called the "fourth credit bureau." It maintains
+  consumer credit files and is used by some lenders for pre-screening.
+  Less commonly known than the big three but worth opting out.

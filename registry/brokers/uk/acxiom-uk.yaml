@@ -1,0 +1,40 @@
+id: acxiom-uk
+name: Acxiom UK
+website: https://www.acxiom.co.uk
+category: marketing
+jurisdictions:
+  - GB
+laws:
+  - GDPR
+data_sensitivity: 4
+priority: high
+
+opt_out:
+  - type: email
+    endpoint: UKPrivacy@acxiom.com
+    template: gdpr-art17
+    locale: en
+    required_fields:
+      - full_name
+      - address
+      - email
+    supports_suppression: true
+    expected_response_days: 30
+
+verification:
+  ack_keywords:
+    - "received"
+    - "erasure"
+    - "opt-out"
+    - "reference"
+  rejection_keywords:
+    - "cannot process"
+    - "legitimate interests"
+  human_required_keywords:
+    - "proof of identity"
+
+notes: |
+  Acxiom UK is Acxiom's British subsidiary, holding consumer marketing
+  data used by UK direct marketers. UK GDPR applies. They also operate
+  the UK Mailing Preference Service (MPS) in partnership with the DMA —
+  registering at mpsonline.org.uk suppresses all DMA-member direct mail.

@@ -1,0 +1,54 @@
+id: liveramp-eu
+name: LiveRamp (EU)
+website: https://liveramp.com
+category: marketing
+jurisdictions:
+  - EU
+  - DE
+  - FR
+  - GB
+laws:
+  - GDPR
+data_sensitivity: 4
+priority: high
+
+opt_out:
+  - type: email
+    endpoint: GDPR@liveramp.com
+    template: gdpr-art17
+    locale: en
+    required_fields:
+      - full_name
+      - email
+    supports_suppression: true
+    expected_response_days: 30
+
+  - type: web_form
+    url: https://liveramp.com/opt_out/
+    form_spec:
+      steps:
+        - goto: .
+        - fill:
+            "input[name=email]": "${email}"
+        - click: "button[type=submit]"
+        - wait_for: ".success"
+        - screenshot: "result"
+      timeout_seconds: 30.0
+      rate_limit_delay: 1.0
+
+verification:
+  ack_keywords:
+    - "opt-out"
+    - "received"
+    - "suppressed"
+  rejection_keywords:
+    - "not found"
+    - "already opted out"
+  human_required_keywords:
+    - "additional information"
+
+notes: |
+  LiveRamp's EU operations are subject to GDPR. The GDPR Art. 17 email
+  channel provides stronger deletion rights than the web opt-out. Send to
+  GDPR@liveramp.com for the formal erasure request. LiveRamp EU is
+  incorporated in Ireland.

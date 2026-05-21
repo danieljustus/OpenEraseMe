@@ -1,0 +1,45 @@
+id: epsilon-us
+name: Epsilon (Publicis Groupe)
+website: https://www.epsilon.com
+category: marketing
+jurisdictions:
+  - US
+laws:
+  - CCPA
+data_sensitivity: 4
+priority: high
+
+opt_out:
+  - type: web_form
+    url: https://www.epsilon.com/us/privacy-policy/epsilon-main-website-privacy-notice/consumer-opt-out
+    form_spec:
+      steps:
+        - goto: .
+        - fill:
+            "input[name=first_name]": "${first_name}"
+            "input[name=last_name]": "${last_name}"
+            "input[name=email]": "${email}"
+            "input[name=address]": "${address}"
+            "input[name=city]": "${city}"
+            "input[name=state]": "${state}"
+            "input[name=zip]": "${postal_code}"
+        - click: "button[type=submit]"
+        - wait_for: ".confirmation"
+        - screenshot: "result"
+      timeout_seconds: 45.0
+      rate_limit_delay: 2.0
+
+verification:
+  ack_keywords:
+    - "opt-out"
+    - "received"
+    - "confirmation"
+  rejection_keywords:
+    - "cannot process"
+  human_required_keywords:
+    - "identity verification"
+
+notes: |
+  Epsilon (acquired by Publicis Groupe) is one of the largest US marketing
+  data companies, operating the Abacus cooperative database and providing
+  data to many Fortune 500 companies for direct marketing purposes.

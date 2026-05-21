@@ -1,0 +1,32 @@
+id: clustrmaps-us
+name: ClustrMaps
+website: https://clustrmaps.com
+category: people-search
+jurisdictions:
+  - US
+laws:
+  - CCPA
+data_sensitivity: 3
+priority: low
+
+opt_out:
+  - type: email
+    endpoint: privacy@clustrmaps.com
+    template: ccpa-deletion
+    locale: en
+    required_fields:
+      - full_name
+      - email
+      - address
+    supports_suppression: true
+    expected_response_days: 30
+
+verification:
+  ack_keywords:
+    - "removal"
+    - "opt-out"
+    - "received"
+  rejection_keywords:
+    - "cannot process"
+  human_required_keywords:
+    - "additional information"

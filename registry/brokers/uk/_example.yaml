@@ -1,0 +1,59 @@
+# Fully documented example broker entry
+# See CONTRIBUTING.md for the onboarding guide.
+id: example-broker-uk
+name: Example Data Broker Ltd
+website: https://example-broker.co.uk
+category: people-search
+jurisdictions:
+  - DE
+  - AT
+  - EU
+laws:
+  - GDPR
+data_sensitivity: 4
+priority: high
+
+opt_out:
+  - type: email
+    endpoint: privacy@example-broker.co.uk
+    template: gdpr-art17
+    locale: de
+    required_fields:
+      - full_name
+      - address
+      - email
+    supports_suppression: true
+    expected_response_days: 30
+  - type: web_form
+    url: https://example-broker.co.uk/privacy/delete
+    form_spec:
+      steps:
+        - goto: .
+        - fill:
+            "#name": "${full_name}"
+            "#email": "${email}"
+        - solve_captcha:
+            type: recaptcha-v2
+            site_key: "REPLACE_WITH_LIVE_SITEKEY"  # capture from page source
+            provider: capsolver
+        - click: "#submit"
+        - wait_for: ".confirmation"
+        - screenshot: "result"
+      timeout_seconds: 30.0
+      rate_limit_delay: 1.5
+
+verification:
+  ack_keywords:
+    - "received"
+    - "wir bestätigen"
+    - "request id"
+  rejection_keywords:
+    - "cannot verify"
+    - "additional information required"
+  human_required_keywords:
+    - "upload id"
+    - "passport"
+    - "ausweis"
+
+notes: |
+  May sometimes require an old address. See rebuttal-template gdpr-rebuttal-address.
