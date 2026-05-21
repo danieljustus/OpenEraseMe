@@ -52,6 +52,12 @@ triage = [
 [project.scripts]
 openeraseme = "openeraseme.cli:app"
 
+[project.urls]
+Homepage = "https://github.com/danieljustus/OpenEraseMe"
+Repository = "https://github.com/danieljustus/OpenEraseMe"
+Issues = "https://github.com/danieljustus/OpenEraseMe/issues"
+Changelog = "https://github.com/danieljustus/OpenEraseMe/releases"
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
