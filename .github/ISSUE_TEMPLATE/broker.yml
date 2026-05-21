@@ -1,0 +1,154 @@
+name: Add / Update Data Broker
+description: Submit a new data broker or update an existing one in the registry
+labels: ["broker", "registry"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Adding a Broker to the Registry
+
+        Thank you for contributing! Each broker entry is a YAML file in
+        `registry/brokers/<region>/`. A merged entry means OpenEraseMe can
+        automatically file opt-out requests on behalf of users.
+
+        **Quick guide:**
+        - `us/` → US brokers (CCPA / CPRA)
+        - `eu/` → EU brokers (GDPR)
+        - `uk/` → UK brokers (UK GDPR)
+
+        See `registry/brokers/eu/_example.yaml` for the full reference format,
+        and `registry/schemas/broker.schema.json` for the schema.
+
+  - type: input
+    id: broker_name
+    attributes:
+      label: Broker Name
+      description: Legal name of the data broker.
+      placeholder: "e.g. Radaris LLC"
+    validations:
+      required: true
+
+  - type: input
+    id: broker_website
+    attributes:
+      label: Website
+      description: Broker homepage URL.
+      placeholder: "https://example.com"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: region
+    attributes:
+      label: Region / Jurisdiction
+      description: Where does this broker primarily operate?
+      options:
+        - US (CCPA / CPRA)
+        - EU (GDPR)
+        - UK (UK GDPR)
+        - Other (describe in notes)
+      multiple: false
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - people-search
+        - background-check
+        - marketing
+        - credit
+        - analytics
+        - social-media
+        - other
+      multiple: false
+    validations:
+      required: true
+
+  - type: dropdown
+    id: opt_out_type
+    attributes:
+      label: Opt-Out Method
+      description: How do users submit removal requests?
+      options:
+        - Web form (automated)
+        - Email request
+        - Both web form and email
+        - Unknown / needs research
+      multiple: false
+    validations:
+      required: true
+
+  - type: input
+    id: opt_out_url
+    attributes:
+      label: Opt-Out URL or Email
+      description: Direct link to the opt-out page, or the privacy/deletion email address.
+      placeholder: "https://example.com/optout  or  privacy@example.com"
+
+  - type: textarea
+    id: form_fields
+    attributes:
+      label: Required Form Fields
+      description: |
+        What information does the opt-out form or email request require?
+        Check all that apply (or describe freeform).
+      placeholder: |
+        - [ ] First name / Last name
+        - [ ] Email address
+        - [ ] Postal address
+        - [ ] Date of birth
+        - [ ] State / Country
+        - [ ] Social Security Number (last 4)
+        - [ ] CAPTCHA present (type: reCAPTCHA v2 / v3 / hCaptcha)
+
+  - type: textarea
+    id: confirmation_keywords
+    attributes:
+      label: Confirmation / Acknowledgement Keywords
+      description: |
+        What text appears on screen or in a confirmation email after
+        a successful opt-out submission? These are used for automated triage.
+      placeholder: |
+        e.g. "Your request has been submitted", "opt-out confirmed", "removal request received"
+
+  - type: textarea
+    id: captcha_sitekey
+    attributes:
+      label: CAPTCHA Site Key (if applicable)
+      description: |
+        If the form has a reCAPTCHA or hCaptcha, provide the `data-sitekey`
+        attribute value from the page's HTML source. This is needed for
+        automated solving.
+      placeholder: "6Lc...XXXX  (found in the page's HTML as data-sitekey=)"
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional Notes
+      description: |
+        Anything else that would help implement or verify this broker entry:
+        required identity documents, quirks, regional variations, known issues, etc.
+
+  - type: textarea
+    id: yaml_draft
+    attributes:
+      label: Draft YAML (optional but appreciated)
+      description: |
+        If you're comfortable with the format, paste a draft YAML entry here.
+        Look at `registry/brokers/eu/_example.yaml` for the reference.
+      render: yaml
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I have searched existing broker files and this broker is not yet listed.
+          required: true
+        - label: I have verified the opt-out URL / email is currently reachable.
+          required: true
+        - label: I am not including any personal data (credentials, API keys) in this submission.
+          required: true
