@@ -3,50 +3,52 @@ name: Zeotap GmbH
 website: https://zeotap.com
 category: marketing
 jurisdictions:
-  - DE
-  - EU
+- DE
+- EU
 laws:
-  - GDPR
+- GDPR
 data_sensitivity: 4
 priority: medium
-
 opt_out:
-  - type: email
-    endpoint: privacy@zeotap.com
-    template: gdpr-art17
-    locale: en
-    required_fields:
-      - full_name
-      - email
-    supports_suppression: true
-    expected_response_days: 30
-
-  - type: web_form
-    url: https://zeotap.com/privacy/
-    form_spec:
-      steps:
-        - goto: .
-        - fill:
-            "input[name=email]": "${email}"
-            "input[name=name]": "${full_name}"
-        - click: "button[type=submit]"
-        - wait_for: ".success"
-        - screenshot: "result"
-      timeout_seconds: 30.0
-      rate_limit_delay: 1.5
-
+- type: email
+  endpoint: privacy@zeotap.com
+  template: gdpr-art17
+  locale: en
+  required_fields:
+  - full_name
+  - email
+  supports_suppression: true
+  expected_response_days: 30
+- type: web_form
+  url: https://zeotap.com/privacy/
+  form_spec:
+    steps:
+    - goto: .
+    - fill:
+        input[name=email]: ${email}
+        input[name=name]: ${full_name}
+    - click: button[type=submit]
+    - wait_for: .success
+    - screenshot: result
+    timeout_seconds: 30.0
+    rate_limit_delay: 1.5
 verification:
   ack_keywords:
-    - "received"
-    - "opt-out"
-    - "request"
+  - received
+  - opt-out
+  - request
   rejection_keywords:
-    - "not found"
-    - "cannot process"
+  - not found
+  - cannot process
   human_required_keywords:
-    - "additional information"
+  - additional information
+notes: 'Zeotap is a Berlin-based customer intelligence platform (CDP) providing
 
-notes: |
-  Zeotap is a Berlin-based customer intelligence platform (CDP) providing
   identity resolution and audience data to advertisers and publishers across
+
   the EU. They operate the zeotap ID+ identity framework.
+
+  '
+added_date: '2025-05-21'
+status: active
+source: California Data Broker Registry

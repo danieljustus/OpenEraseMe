@@ -3,40 +3,44 @@ name: AZ Direct GmbH
 website: https://www.az-direct.com
 category: marketing
 jurisdictions:
-  - DE
-  - AT
-  - EU
+- DE
+- AT
+- EU
 laws:
-  - GDPR
+- GDPR
 data_sensitivity: 4
 priority: medium
-
 opt_out:
-  - type: email
-    endpoint: datenschutz@az-direct.com
-    template: gdpr-art17
-    locale: de
-    required_fields:
-      - full_name
-      - address
-      - email
-    supports_suppression: true
-    expected_response_days: 30
-
+- type: email
+  endpoint: datenschutz@az-direct.com
+  template: gdpr-art17
+  locale: de
+  required_fields:
+  - full_name
+  - address
+  - email
+  supports_suppression: true
+  expected_response_days: 30
 verification:
   ack_keywords:
-    - "bestätigen"
-    - "widerspruch"
-    - "sperrvermerk"
+  - bestätigen
+  - widerspruch
+  - sperrvermerk
   rejection_keywords:
-    - "nicht möglich"
+  - nicht möglich
   human_required_keywords:
-    - "ausweis"
-    - "identitätsnachweis"
+  - ausweis
+  - identitätsnachweis
+notes: 'AZ Direct (part of the Bertelsmann group) is one of Germany''s largest
 
-notes: |
-  AZ Direct (part of the Bertelsmann group) is one of Germany's largest
   direct marketing data providers. They maintain the "Robinsonliste"
+
   suppression file for direct marketing. Requesting a Sperrvermerk
+
   (suppression flag) is often more effective than a full deletion request
+
   for marketing opt-outs, as it persists across database updates.
+
+  '
+added_date: '2025-05-21'
+status: active

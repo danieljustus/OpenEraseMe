@@ -3,39 +3,41 @@ name: Schober Information Group
 website: https://www.schober.de
 category: marketing
 jurisdictions:
-  - DE
-  - AT
-  - CH
-  - EU
+- DE
+- AT
+- CH
+- EU
 laws:
-  - GDPR
+- GDPR
 data_sensitivity: 3
 priority: medium
-
 opt_out:
-  - type: email
-    endpoint: datenschutz@schober.de
-    template: gdpr-art17
-    locale: de
-    required_fields:
-      - full_name
-      - address
-      - email
-    supports_suppression: true
-    expected_response_days: 30
-
+- type: email
+  endpoint: datenschutz@schober.de
+  template: gdpr-art17
+  locale: de
+  required_fields:
+  - full_name
+  - address
+  - email
+  supports_suppression: true
+  expected_response_days: 30
 verification:
   ack_keywords:
-    - "bestätigen"
-    - "widerspruch"
-    - "löschung"
+  - bestätigen
+  - widerspruch
+  - löschung
   rejection_keywords:
-    - "nicht möglich"
+  - nicht möglich
   human_required_keywords:
-    - "rückfragen"
-    - "identitätsnachweis"
+  - rückfragen
+  - identitätsnachweis
+notes: 'Schober is a German-speaking direct marketing data and address broker
 
-notes: |
-  Schober is a German-speaking direct marketing data and address broker
   operating in DE, AT, and CH. They supply address lists and consumer
+
   segment data to direct marketers and publishers.
+
+  '
+added_date: '2025-05-21'
+status: active

@@ -3,62 +3,64 @@ name: CRIF GmbH (Bürgel)
 website: https://www.crif.de
 category: credit
 jurisdictions:
-  - DE
-  - AT
-  - EU
+- DE
+- AT
+- EU
 laws:
-  - GDPR
+- GDPR
 data_sensitivity: 5
 priority: high
-
 opt_out:
-  - type: email
-    endpoint: datenschutz@crif.de
-    template: gdpr-art17
-    locale: de
-    required_fields:
-      - full_name
-      - address
-      - email
-      - date_of_birth
-    supports_suppression: false
-    expected_response_days: 30
-
-  - type: web_form
-    url: https://www.crif.de/verbraucher/datenschutz/
-    form_spec:
-      steps:
-        - goto: .
-        - fill:
-            "input[name=vorname]": "${first_name}"
-            "input[name=nachname]": "${last_name}"
-            "input[name=email]": "${email}"
-            "input[name=strasse]": "${address}"
-            "input[name=plz]": "${postal_code}"
-            "input[name=ort]": "${city}"
-            "input[name=geburtsdatum]": "${date_of_birth}"
-        - click: "button[type=submit]"
-        - wait_for: ".success"
-        - screenshot: "result"
-      timeout_seconds: 45.0
-      rate_limit_delay: 3.0
-
+- type: email
+  endpoint: datenschutz@crif.de
+  template: gdpr-art17
+  locale: de
+  required_fields:
+  - full_name
+  - address
+  - email
+  - date_of_birth
+  supports_suppression: false
+  expected_response_days: 30
+- type: web_form
+  url: https://www.crif.de/verbraucher/datenschutz/
+  form_spec:
+    steps:
+    - goto: .
+    - fill:
+        input[name=vorname]: ${first_name}
+        input[name=nachname]: ${last_name}
+        input[name=email]: ${email}
+        input[name=strasse]: ${address}
+        input[name=plz]: ${postal_code}
+        input[name=ort]: ${city}
+        input[name=geburtsdatum]: ${date_of_birth}
+    - click: button[type=submit]
+    - wait_for: .success
+    - screenshot: result
+    timeout_seconds: 45.0
+    rate_limit_delay: 3.0
 verification:
   ack_keywords:
-    - "bestätigen"
-    - "eingang"
-    - "vorgangsnummer"
-    - "löschung"
+  - bestätigen
+  - eingang
+  - vorgangsnummer
+  - löschung
   rejection_keywords:
-    - "nicht möglich"
-    - "berechtigtes interesse"
+  - nicht möglich
+  - berechtigtes interesse
   human_required_keywords:
-    - "ausweis"
-    - "personalausweis"
-    - "identitätsnachweis"
+  - ausweis
+  - personalausweis
+  - identitätsnachweis
+notes: 'CRIF GmbH (formerly Bürgel Wirtschaftsinformationen) is a major German
 
-notes: |
-  CRIF GmbH (formerly Bürgel Wirtschaftsinformationen) is a major German
   credit reference agency, now part of the Italian CRIF Group. They provide
+
   credit scores and consumer data to banks, insurers, and landlords.
+
   Geburtsdatum = date of birth, required for identity matching.
+
+  '
+added_date: '2025-05-21'
+status: active

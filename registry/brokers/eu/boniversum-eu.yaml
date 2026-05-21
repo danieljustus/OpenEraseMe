@@ -3,40 +3,43 @@ name: Boniversum (Arvato Financial Solutions)
 website: https://www.boniversum.de
 category: credit
 jurisdictions:
-  - DE
-  - EU
+- DE
+- EU
 laws:
-  - GDPR
+- GDPR
 data_sensitivity: 5
 priority: high
-
 opt_out:
-  - type: email
-    endpoint: datenschutz@boniversum.de
-    template: gdpr-art17
-    locale: de
-    required_fields:
-      - full_name
-      - address
-      - email
-      - date_of_birth
-    supports_suppression: false
-    expected_response_days: 30
-
+- type: email
+  endpoint: datenschutz@boniversum.de
+  template: gdpr-art17
+  locale: de
+  required_fields:
+  - full_name
+  - address
+  - email
+  - date_of_birth
+  supports_suppression: false
+  expected_response_days: 30
 verification:
   ack_keywords:
-    - "bestätigen"
-    - "eingang"
-    - "löschung"
+  - bestätigen
+  - eingang
+  - löschung
   rejection_keywords:
-    - "nicht möglich"
-    - "berechtigtes interesse"
+  - nicht möglich
+  - berechtigtes interesse
   human_required_keywords:
-    - "ausweis"
-    - "identitätsnachweis"
+  - ausweis
+  - identitätsnachweis
+notes: 'Boniversum is Arvato Financial Solutions'' consumer credit reporting
 
-notes: |
-  Boniversum is Arvato Financial Solutions' consumer credit reporting
   service, a subsidiary of Bertelsmann. They provide creditworthiness
+
   data to German banks, telecoms, and insurance companies.
+
   Consumer self-inquiries are free once per year under GDPR Art. 15.
+
+  '
+added_date: '2025-05-21'
+status: active

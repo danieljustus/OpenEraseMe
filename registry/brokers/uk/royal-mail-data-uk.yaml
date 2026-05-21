@@ -3,38 +3,42 @@ name: Royal Mail Data Services
 website: https://www.royalmail.com/business/data
 category: marketing
 jurisdictions:
-  - GB
+- GB
 laws:
-  - GDPR
+- GDPR
 data_sensitivity: 3
 priority: medium
-
 opt_out:
-  - type: email
-    endpoint: dpo@royalmail.com
-    template: gdpr-art17
-    locale: en
-    required_fields:
-      - full_name
-      - address
-      - email
-    supports_suppression: true
-    expected_response_days: 30
-
+- type: email
+  endpoint: dpo@royalmail.com
+  template: gdpr-art17
+  locale: en
+  required_fields:
+  - full_name
+  - address
+  - email
+  supports_suppression: true
+  expected_response_days: 30
 verification:
   ack_keywords:
-    - "received"
-    - "erasure"
-    - "opt-out"
+  - received
+  - erasure
+  - opt-out
   rejection_keywords:
-    - "cannot process"
-    - "public task"
+  - cannot process
+  - public task
   human_required_keywords:
-    - "proof of identity"
+  - proof of identity
+notes: 'Royal Mail Data Services supplies address cleaning, validation, and
 
-notes: |
-  Royal Mail Data Services supplies address cleaning, validation, and
   consumer marketing data products (Postal Address File, PAF) to UK
+
   businesses. They also provide National Change of Address data to
+
   direct marketers. Opt-out suppresses your address from their
+
   marketing database products but not from postal delivery services.
+
+  '
+added_date: '2025-05-21'
+status: active

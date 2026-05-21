@@ -31,4 +31,6 @@ verification:
   - verify
   - identification
   - upload
-notes: 'Source: VT'
+added_date: '2025-05-21'
+status: active
+source: Vermont Data Broker Registry

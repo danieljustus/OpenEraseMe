@@ -3,55 +3,57 @@ name: TransUnion UK (CallCredit)
 website: https://www.transunion.co.uk
 category: credit
 jurisdictions:
-  - GB
+- GB
 laws:
-  - GDPR
+- GDPR
 data_sensitivity: 5
 priority: high
-
 opt_out:
-  - type: email
-    endpoint: ukdataprotection@transunion.com
-    template: gdpr-art17
-    locale: en
-    required_fields:
-      - full_name
-      - address
-      - email
-      - date_of_birth
-    supports_suppression: false
-    expected_response_days: 30
-
-  - type: web_form
-    url: https://www.transunion.co.uk/legal/privacy-centre
-    form_spec:
-      steps:
-        - goto: .
-        - fill:
-            "input[name=first_name]": "${first_name}"
-            "input[name=last_name]": "${last_name}"
-            "input[name=dob]": "${date_of_birth}"
-            "input[name=email]": "${email}"
-            "input[name=address]": "${address}"
-        - click: "button[type=submit]"
-        - wait_for: ".confirmation"
-        - screenshot: "result"
-      timeout_seconds: 60.0
-      rate_limit_delay: 3.0
-
+- type: email
+  endpoint: ukdataprotection@transunion.com
+  template: gdpr-art17
+  locale: en
+  required_fields:
+  - full_name
+  - address
+  - email
+  - date_of_birth
+  supports_suppression: false
+  expected_response_days: 30
+- type: web_form
+  url: https://www.transunion.co.uk/legal/privacy-centre
+  form_spec:
+    steps:
+    - goto: .
+    - fill:
+        input[name=first_name]: ${first_name}
+        input[name=last_name]: ${last_name}
+        input[name=dob]: ${date_of_birth}
+        input[name=email]: ${email}
+        input[name=address]: ${address}
+    - click: button[type=submit]
+    - wait_for: .confirmation
+    - screenshot: result
+    timeout_seconds: 60.0
+    rate_limit_delay: 3.0
 verification:
   ack_keywords:
-    - "received"
-    - "erasure"
-    - "reference"
+  - received
+  - erasure
+  - reference
   rejection_keywords:
-    - "cannot process"
-    - "legitimate interests"
+  - cannot process
+  - legitimate interests
   human_required_keywords:
-    - "proof of identity"
+  - proof of identity
+notes: 'TransUnion UK (formerly CallCredit) is the third UK credit bureau. They
 
-notes: |
-  TransUnion UK (formerly CallCredit) is the third UK credit bureau. They
   operate TrueLayer, Noddle (consumer-facing), and the CAIS industry data
+
   sharing scheme. UK GDPR applies. Also known as Callcredit Information Group
+
   prior to rebranding.
+
+  '
+added_date: '2025-05-21'
+status: active

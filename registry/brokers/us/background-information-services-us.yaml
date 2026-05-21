@@ -31,4 +31,6 @@ verification:
   - verify
   - identification
   - upload
-notes: 'Source: SAMPLE'
+added_date: '2025-05-21'
+status: active
+source: Data Broker Sample List

@@ -3,44 +3,47 @@ name: Bisnode (Dun & Bradstreet)
 website: https://www.bisnode.com
 category: analytics
 jurisdictions:
-  - SE
-  - "NO"
-  - DK
-  - FI
-  - DE
-  - EU
+- SE
+- 'NO'
+- DK
+- FI
+- DE
+- EU
 laws:
-  - GDPR
+- GDPR
 data_sensitivity: 4
 priority: medium
-
 opt_out:
-  - type: email
-    endpoint: privacy@bisnode.com
-    template: gdpr-art17
-    locale: en
-    required_fields:
-      - full_name
-      - address
-      - email
-      - date_of_birth
-    supports_suppression: false
-    expected_response_days: 30
-
+- type: email
+  endpoint: privacy@bisnode.com
+  template: gdpr-art17
+  locale: en
+  required_fields:
+  - full_name
+  - address
+  - email
+  - date_of_birth
+  supports_suppression: false
+  expected_response_days: 30
 verification:
   ack_keywords:
-    - "received"
-    - "request"
-    - "erasure"
+  - received
+  - request
+  - erasure
   rejection_keywords:
-    - "cannot process"
-    - "legitimate interests"
+  - cannot process
+  - legitimate interests
   human_required_keywords:
-    - "identity verification"
-    - "documentation"
+  - identity verification
+  - documentation
+notes: 'Bisnode was a Nordic/European data analytics company, now fully rebranded
 
-notes: |
-  Bisnode was a Nordic/European data analytics company, now fully rebranded
   under Dun & Bradstreet after the 2021 acquisition. They provide B2B and
+
   B2C data across the Nordics and DACH region. Contact their regional
+
   DPA-registered offices for jurisdiction-specific requests.
+
+  '
+added_date: '2025-05-21'
+status: active

@@ -3,41 +3,45 @@ name: Equifax UK
 website: https://www.equifax.co.uk
 category: credit
 jurisdictions:
-  - GB
+- GB
 laws:
-  - GDPR
+- GDPR
 data_sensitivity: 5
 priority: high
-
 opt_out:
-  - type: email
-    endpoint: dpo@equifax.co.uk
-    template: gdpr-art17
-    locale: en
-    required_fields:
-      - full_name
-      - address
-      - email
-      - date_of_birth
-    supports_suppression: false
-    expected_response_days: 30
-
+- type: email
+  endpoint: dpo@equifax.co.uk
+  template: gdpr-art17
+  locale: en
+  required_fields:
+  - full_name
+  - address
+  - email
+  - date_of_birth
+  supports_suppression: false
+  expected_response_days: 30
 verification:
   ack_keywords:
-    - "received"
-    - "erasure"
-    - "reference number"
-    - "request"
+  - received
+  - erasure
+  - reference number
+  - request
   rejection_keywords:
-    - "cannot process"
-    - "legitimate interests"
+  - cannot process
+  - legitimate interests
   human_required_keywords:
-    - "proof of identity"
-    - "documentation"
+  - proof of identity
+  - documentation
+notes: 'Equifax UK is regulated by the ICO. UK GDPR applies post-Brexit.
 
-notes: |
-  Equifax UK is regulated by the ICO. UK GDPR applies post-Brexit.
   Equifax UK also operates the "Gone Away Suppression" (GAS) service
+
   and the National Hunter fraud prevention database. Contact separately
+
   for each service. Marketing suppression can be requested via
+
   the UK Mailing Preference Service (MPS) at mpsonline.org.uk.
+
+  '
+added_date: '2025-05-21'
+status: active

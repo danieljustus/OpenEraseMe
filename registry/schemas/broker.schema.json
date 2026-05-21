@@ -125,6 +125,21 @@
       "default": false,
       "description": "When true, this broker is excluded from default plans and listings. Use when the broker entry is incomplete or known-broken (e.g. unverified CAPTCHA sitekey). Pair with notes explaining the reason."
     },
+    "added_date": {
+      "type": "string",
+      "format": "date",
+      "description": "ISO 8601 date when this broker entry was added to the registry."
+    },
+    "source": {
+      "type": "string",
+      "description": "Source registry or reference that verified this broker (e.g. 'California Data Broker Registry 2026', 'Vermont Data Broker Registry'). Only set when the source is known and verifiable."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["active", "deprecated", "merged", "out-of-business"],
+      "default": "active",
+      "description": "Operational status of the broker entry."
+    },
     "notes": { "type": "string" }
   },
   "$defs": {

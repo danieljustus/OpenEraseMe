@@ -3,32 +3,32 @@ name: TransUnion International UK Limited
 website: https://www.transunion.co.uk
 category: credit
 jurisdictions:
-  - UK
-  - EU
+- UK
+- EU
 laws:
-  - GDPR
+- GDPR
 data_sensitivity: 5
 priority: high
-
 opt_out:
-  - type: email
-    endpoint: privacy@transunion.com
-    template: gdpr-art17
-    locale: en
-    required_fields:
-      - full_name
-      - email
-      - address
-      - date_of_birth
-    supports_suppression: false
-    expected_response_days: 30
-
+- type: email
+  endpoint: privacy@transunion.com
+  template: gdpr-art17
+  locale: en
+  required_fields:
+  - full_name
+  - email
+  - address
+  - date_of_birth
+  supports_suppression: false
+  expected_response_days: 30
 verification:
   ack_keywords:
-    - "received"
-    - "reference number"
+  - received
+  - reference number
   rejection_keywords:
-    - "cannot verify"
-    - "further information"
+  - cannot verify
+  - further information
   human_required_keywords:
-    - "identity verification"
+  - identity verification
+added_date: '2025-05-21'
+status: active
