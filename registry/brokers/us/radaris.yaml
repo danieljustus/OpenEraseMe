@@ -3,36 +3,34 @@ name: Radaris
 website: https://radaris.com
 category: people-search
 jurisdictions:
-  - US
+- US
 laws:
-  - CCPA
+- CCPA
 data_sensitivity: 4
 priority: high
-
 opt_out:
-  - type: web_form
-    url: https://radaris.com/control/privacy
-    form_spec:
-      steps:
-        - goto: .
-        - fill:
-            "#first_name": "${first_name}"
-            "#last_name": "${last_name}"
-            "#email": "${email}"
-        - click: "button[type=submit]"
-        - wait_for: ".success-message"
-        - screenshot: "result"
-      timeout_seconds: 45.0
-      rate_limit_delay: 2.0
-
+- type: web_form
+  url: https://radaris.com/control/privacy
+  form_spec:
+    steps:
+    - goto: .
+    - fill:
+        '#first_name': ${first_name}
+        '#last_name': ${last_name}
+        '#email': ${email}
+    - click: button[type=submit]
+    - wait_for: .success-message
+    - screenshot: result
+    timeout_seconds: 45.0
+    rate_limit_delay: 2.0
 verification:
   ack_keywords:
-    - "removal request"
-    - "submitted"
-    - "confirmation"
+  - removal request
+  - submitted
+  - confirmation
   rejection_keywords:
-    - "already removed"
-    - "not found"
+  - already removed
+  - not found
   human_required_keywords:
-    - "verify identity"
-    - "manual review"
+  - verify identity
+  - manual review

@@ -3,41 +3,41 @@ name: Instant Checkmate
 website: https://www.instantcheckmate.com
 category: background-check
 jurisdictions:
-  - US
+- US
 laws:
-  - CCPA
+- CCPA
 data_sensitivity: 4
 priority: high
-
 opt_out:
-  - type: web_form
-    url: https://www.instantcheckmate.com/opt-out/
-    form_spec:
-      steps:
-        - goto: .
-        - fill:
-            "#first-name": "${first_name}"
-            "#last-name": "${last_name}"
-            "#state": "${state}"
-        - click: "button[type=submit]"
-        - wait_for: ".confirmation"
-        - screenshot: "result"
-      timeout_seconds: 60.0
-      rate_limit_delay: 3.0
-
+- type: web_form
+  url: https://www.instantcheckmate.com/opt-out/
+  form_spec:
+    steps:
+    - goto: .
+    - fill:
+        '#first-name': ${first_name}
+        '#last-name': ${last_name}
+        '#state': ${state}
+    - click: button[type=submit]
+    - wait_for: .confirmation
+    - screenshot: result
+    timeout_seconds: 60.0
+    rate_limit_delay: 3.0
 verification:
   ack_keywords:
-    - "opt-out"
-    - "submitted"
-    - "removed"
+  - opt-out
+  - submitted
+  - removed
   rejection_keywords:
-    - "not found"
-    - "already opted out"
+  - not found
+  - already opted out
   human_required_keywords:
-    - "verify"
-    - "contact support"
+  - verify
+  - contact support
+notes: 'Instant Checkmate shares infrastructure with TruthFinder (both operated
 
-notes: |
-  Instant Checkmate shares infrastructure with TruthFinder (both operated
   by Affiniti). An opt-out on one does not automatically remove records
+
   from the other — submit separately for each service.
+
+  '

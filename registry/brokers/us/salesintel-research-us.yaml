@@ -1,0 +1,34 @@
+id: salesintel-research-us
+name: SalesIntel Research Inc.
+website: http://www.salesintel.io
+category: other
+jurisdictions:
+- US
+laws:
+- CCPA
+data_sensitivity: 3
+priority: medium
+opt_out:
+- type: email
+  endpoint: privacy@salesintel.io
+  template: ccpa-art1798
+  locale: en
+  required_fields:
+  - full_name
+  - email
+  supports_suppression: true
+  expected_response_days: 45
+verification:
+  ack_keywords:
+  - received
+  - request
+  - submitted
+  rejection_keywords:
+  - cannot
+  - denied
+  - rejected
+  human_required_keywords:
+  - verify
+  - identification
+  - upload
+notes: 'Source: CA'

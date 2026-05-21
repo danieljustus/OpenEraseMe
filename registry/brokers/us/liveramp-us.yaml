@@ -1,41 +1,34 @@
 id: liveramp-us
-name: LiveRamp (US)
-website: https://liveramp.com
-category: marketing
+name: LiveRamp, Inc.
+website: http://www.liveramp.com
+category: other
 jurisdictions:
-  - US
+- US
 laws:
-  - CCPA
-data_sensitivity: 4
-priority: high
-
+- CCPA
+data_sensitivity: 3
+priority: medium
 opt_out:
-  - type: web_form
-    url: https://liveramp.com/opt_out/
-    form_spec:
-      steps:
-        - goto: .
-        - fill:
-            "input[name=email]": "${email}"
-        - click: "button[type=submit]"
-        - wait_for: ".success"
-        - screenshot: "result"
-      timeout_seconds: 30.0
-      rate_limit_delay: 1.0
-
+- type: email
+  endpoint: consumercare@liveramp.com
+  template: ccpa-art1798
+  locale: en
+  required_fields:
+  - full_name
+  - email
+  supports_suppression: true
+  expected_response_days: 45
 verification:
   ack_keywords:
-    - "opt-out"
-    - "submitted"
-    - "request received"
+  - received
+  - request
+  - submitted
   rejection_keywords:
-    - "already opted out"
-    - "not found"
+  - cannot
+  - denied
+  - rejected
   human_required_keywords:
-    - "contact us"
-
-notes: |
-  LiveRamp is a major identity resolution platform used by advertisers,
-  publishers, and data platforms globally. Opting out removes your email
-  from their identity graph. LiveRamp operates under the Digital Advertising
-  Alliance (DAA) framework.
+  - verify
+  - identification
+  - upload
+notes: 'Source: CA'

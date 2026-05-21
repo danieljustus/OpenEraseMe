@@ -3,42 +3,42 @@ name: FastPeopleSearch
 website: https://www.fastpeoplesearch.com
 category: people-search
 jurisdictions:
-  - US
+- US
 laws:
-  - CCPA
+- CCPA
 data_sensitivity: 3
 priority: medium
-
 opt_out:
-  - type: web_form
-    url: https://www.fastpeoplesearch.com/removal
-    form_spec:
-      steps:
-        - goto: .
-        - fill:
-            "input[name=full_name]": "${full_name}"
-            "input[name=email]": "${email}"
-        - solve_captcha:
-            type: recaptcha-v2
-            site_key: NEEDS_RESEARCH_REPLACE_WITH_REAL_SITEKEY
-            provider: capsolver
-        - click: "button[type=submit]"
-        - wait_for: ".removal-confirmation"
-        - screenshot: "result"
-      timeout_seconds: 60.0
-      rate_limit_delay: 2.0
-    disabled: true
-
+- type: web_form
+  url: https://www.fastpeoplesearch.com/removal
+  form_spec:
+    steps:
+    - goto: .
+    - fill:
+        input[name=full_name]: ${full_name}
+        input[name=email]: ${email}
+    - solve_captcha:
+        type: recaptcha-v2
+        site_key: NEEDS_RESEARCH_REPLACE_WITH_REAL_SITEKEY
+        provider: capsolver
+    - click: button[type=submit]
+    - wait_for: .removal-confirmation
+    - screenshot: result
+    timeout_seconds: 60.0
+    rate_limit_delay: 2.0
+  disabled: true
 verification:
   ack_keywords:
-    - "removal"
-    - "submitted"
+  - removal
+  - submitted
   rejection_keywords:
-    - "not found"
+  - not found
   human_required_keywords:
-    - "contact us"
+  - contact us
+notes: 'Disabled until the live reCAPTCHA site_key is captured from the removal
 
-notes: |
-  Disabled until the live reCAPTCHA site_key is captured from the removal
   page. Inspect the DOM for data-sitekey, replace the placeholder above,
+
   and set disabled: false.
+
+  '

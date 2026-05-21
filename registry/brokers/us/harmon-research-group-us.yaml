@@ -1,0 +1,34 @@
+id: harmon-research-group-us
+name: Harmon Research Group, LLC
+website: http://www.harmonresearch.com
+category: other
+jurisdictions:
+- US
+laws:
+- CCPA
+data_sensitivity: 3
+priority: medium
+opt_out:
+- type: email
+  endpoint: Info@harmonresearch.com
+  template: ccpa-art1798
+  locale: en
+  required_fields:
+  - full_name
+  - email
+  supports_suppression: true
+  expected_response_days: 45
+verification:
+  ack_keywords:
+  - received
+  - request
+  - submitted
+  rejection_keywords:
+  - cannot
+  - denied
+  - rejected
+  human_required_keywords:
+  - verify
+  - identification
+  - upload
+notes: 'Source: CA'

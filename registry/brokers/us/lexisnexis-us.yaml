@@ -3,49 +3,51 @@ name: LexisNexis Risk Solutions
 website: https://risk.lexisnexis.com
 category: background-check
 jurisdictions:
-  - US
+- US
 laws:
-  - CCPA
+- CCPA
 data_sensitivity: 5
 priority: high
-
 opt_out:
-  - type: web_form
-    url: https://optout.lexisnexis.com/
-    form_spec:
-      steps:
-        - goto: .
-        - fill:
-            "#first_name": "${first_name}"
-            "#last_name": "${last_name}"
-            "#address": "${address}"
-            "#city": "${city}"
-            "#state": "${state}"
-            "#zip": "${postal_code}"
-            "#email": "${email}"
-            "#dob": "${date_of_birth}"
-        - click: "#submit"
-        - wait_for: ".confirmation"
-        - screenshot: "result"
-      timeout_seconds: 60.0
-      rate_limit_delay: 3.0
-
+- type: web_form
+  url: https://optout.lexisnexis.com/
+  form_spec:
+    steps:
+    - goto: .
+    - fill:
+        '#first_name': ${first_name}
+        '#last_name': ${last_name}
+        '#address': ${address}
+        '#city': ${city}
+        '#state': ${state}
+        '#zip': ${postal_code}
+        '#email': ${email}
+        '#dob': ${date_of_birth}
+    - click: '#submit'
+    - wait_for: .confirmation
+    - screenshot: result
+    timeout_seconds: 60.0
+    rate_limit_delay: 3.0
 verification:
   ack_keywords:
-    - "opt-out"
-    - "suppression"
-    - "received"
-    - "request id"
+  - opt-out
+  - suppression
+  - received
+  - request id
   rejection_keywords:
-    - "cannot verify"
-    - "insufficient information"
+  - cannot verify
+  - insufficient information
   human_required_keywords:
-    - "identity verification"
-    - "documentation required"
+  - identity verification
+  - documentation required
+notes: 'LexisNexis Risk Solutions is one of the largest data aggregators in the US,
 
-notes: |
-  LexisNexis Risk Solutions is one of the largest data aggregators in the US,
   widely used for identity verification and background checks. The opt-out
+
   page is separate from their consumer LexisNexis legal research product.
+
   Suppression applies to the Accurint and related risk solutions products.
+
   Date of birth is required for identity matching.
+
+  '

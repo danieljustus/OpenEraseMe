@@ -1,0 +1,34 @@
+id: data-axle-inc-fka-infogroup-us
+name: Data Axle, Inc. f/k/a Infogroup Inc.
+website: https://www.data-axle.com
+category: other
+jurisdictions:
+- US
+laws:
+- CCPA
+data_sensitivity: 3
+priority: medium
+opt_out:
+- type: email
+  endpoint: privacyteam@data-axle.com
+  template: ccpa-art1798
+  locale: en
+  required_fields:
+  - full_name
+  - email
+  supports_suppression: true
+  expected_response_days: 45
+verification:
+  ack_keywords:
+  - received
+  - request
+  - submitted
+  rejection_keywords:
+  - cannot
+  - denied
+  - rejected
+  human_required_keywords:
+  - verify
+  - identification
+  - upload
+notes: 'Source: CA'

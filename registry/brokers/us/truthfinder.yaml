@@ -3,41 +3,41 @@ name: TruthFinder
 website: https://www.truthfinder.com
 category: background-check
 jurisdictions:
-  - US
+- US
 laws:
-  - CCPA
+- CCPA
 data_sensitivity: 4
 priority: high
-
 opt_out:
-  - type: web_form
-    url: https://www.truthfinder.com/opt-out/
-    form_spec:
-      steps:
-        - goto: .
-        - fill:
-            "#first-name": "${first_name}"
-            "#last-name": "${last_name}"
-            "#state": "${state}"
-        - click: "button[type=submit]"
-        - wait_for: ".opt-out-confirmation"
-        - screenshot: "result"
-      timeout_seconds: 60.0
-      rate_limit_delay: 3.0
-
+- type: web_form
+  url: https://www.truthfinder.com/opt-out/
+  form_spec:
+    steps:
+    - goto: .
+    - fill:
+        '#first-name': ${first_name}
+        '#last-name': ${last_name}
+        '#state': ${state}
+    - click: button[type=submit]
+    - wait_for: .opt-out-confirmation
+    - screenshot: result
+    timeout_seconds: 60.0
+    rate_limit_delay: 3.0
 verification:
   ack_keywords:
-    - "opt-out request"
-    - "successfully submitted"
-    - "removed"
+  - opt-out request
+  - successfully submitted
+  - removed
   rejection_keywords:
-    - "no record found"
-    - "already opted out"
+  - no record found
+  - already opted out
   human_required_keywords:
-    - "verify"
-    - "contact us"
+  - verify
+  - contact us
+notes: 'TruthFinder requires first name, last name, and state. The opt-out
 
-notes: |
-  TruthFinder requires first name, last name, and state. The opt-out
   applies to all records associated with that name/state combination.
+
   May require email confirmation to complete the removal.
+
+  '

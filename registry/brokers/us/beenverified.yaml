@@ -3,44 +3,46 @@ name: BeenVerified
 website: https://www.beenverified.com
 category: people-search
 jurisdictions:
-  - US
+- US
 laws:
-  - CCPA
+- CCPA
 data_sensitivity: 4
 priority: high
 disabled: true
-
 opt_out:
-  - type: web_form
-    url: https://www.beenverified.com/app/optout
-    form_spec:
-      steps:
-        - goto: .
-        - fill:
-            "#first_name": "${full_name}"
-            "#email": "${email}"
-        - solve_captcha:
-            type: recaptcha-v2
-            site_key: NEEDS_RESEARCH_REPLACE_WITH_REAL_SITEKEY
-            provider: capsolver
-        - click: "#submit"
-        - wait_for: ".confirmation"
-        - screenshot: "result"
-      timeout_seconds: 45.0
-      rate_limit_delay: 2.0
-
+- type: web_form
+  url: https://www.beenverified.com/app/optout
+  form_spec:
+    steps:
+    - goto: .
+    - fill:
+        '#first_name': ${full_name}
+        '#email': ${email}
+    - solve_captcha:
+        type: recaptcha-v2
+        site_key: NEEDS_RESEARCH_REPLACE_WITH_REAL_SITEKEY
+        provider: capsolver
+    - click: '#submit'
+    - wait_for: .confirmation
+    - screenshot: result
+    timeout_seconds: 45.0
+    rate_limit_delay: 2.0
 verification:
   ack_keywords:
-    - "submitted"
-    - "opt-out request"
+  - submitted
+  - opt-out request
   rejection_keywords:
-    - "already opted out"
+  - already opted out
   human_required_keywords:
-    - "manual review"
+  - manual review
+notes: 'Disabled until the live reCAPTCHA site_key is captured from
 
-notes: |
-  Disabled until the live reCAPTCHA site_key is captured from
   https://www.beenverified.com/app/optout. The previous placeholder
+
   ("6Lc...") was not a real key; CapSolver would fail. To re-enable:
-  inspect the form's DOM for the data-sitekey attribute, replace
+
+  inspect the form''s DOM for the data-sitekey attribute, replace
+
   NEEDS_RESEARCH_REPLACE_WITH_REAL_SITEKEY above, and set disabled: false.
+
+  '

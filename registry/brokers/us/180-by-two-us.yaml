@@ -1,0 +1,34 @@
+id: 180-by-two-us
+name: 180 by Two, LLC
+website: http://www.180bytwo.com
+category: other
+jurisdictions:
+- US
+laws:
+- CCPA
+data_sensitivity: 3
+priority: medium
+opt_out:
+- type: email
+  endpoint: privacy@180bytwo.com
+  template: ccpa-art1798
+  locale: en
+  required_fields:
+  - full_name
+  - email
+  supports_suppression: true
+  expected_response_days: 45
+verification:
+  ack_keywords:
+  - received
+  - request
+  - submitted
+  rejection_keywords:
+  - cannot
+  - denied
+  - rejected
+  human_required_keywords:
+  - verify
+  - identification
+  - upload
+notes: 'Source: CA, VT'

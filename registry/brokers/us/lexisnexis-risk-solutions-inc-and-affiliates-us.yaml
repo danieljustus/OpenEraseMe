@@ -1,0 +1,34 @@
+id: lexisnexis-risk-solutions-inc-and-affiliates-us
+name: LEXISNEXIS RISK SOLUTIONS INC. AND AFFILIATES
+website: https://:risk.lexisnexis.com/
+category: other
+jurisdictions:
+- US
+laws:
+- CCPA
+data_sensitivity: 3
+priority: medium
+opt_out:
+- type: email
+  endpoint: legal.compliance@risk.lexisnexis.com
+  template: ccpa-art1798
+  locale: en
+  required_fields:
+  - full_name
+  - email
+  supports_suppression: true
+  expected_response_days: 45
+verification:
+  ack_keywords:
+  - received
+  - request
+  - submitted
+  rejection_keywords:
+  - cannot
+  - denied
+  - rejected
+  human_required_keywords:
+  - verify
+  - identification
+  - upload
+notes: 'Source: VT, SAMPLE'

@@ -1,54 +1,34 @@
 id: dun-bradstreet-us
-name: Dun & Bradstreet (US)
-website: https://www.dnb.com
-category: marketing
+name: Dun & Bradstreet,  Inc
+website: https://www.dnb.com/utility-pages/privacy-policy.html
+category: other
 jurisdictions:
-  - US
+- US
 laws:
-  - CCPA
-data_sensitivity: 4
+- CCPA
+data_sensitivity: 3
 priority: medium
-
 opt_out:
-  - type: email
-    endpoint: privacy@dnb.com
-    template: ccpa-deletion
-    locale: en
-    required_fields:
-      - full_name
-      - email
-      - address
-    supports_suppression: true
-    expected_response_days: 30
-
-  - type: web_form
-    url: https://www.dnb.com/utility-pages/ccpa-request.html
-    form_spec:
-      steps:
-        - goto: .
-        - fill:
-            "input[name=first_name]": "${first_name}"
-            "input[name=last_name]": "${last_name}"
-            "input[name=email]": "${email}"
-            "input[name=address]": "${address}"
-        - click: "button[type=submit]"
-        - wait_for: ".confirmation"
-        - screenshot: "result"
-      timeout_seconds: 45.0
-      rate_limit_delay: 2.0
-
+- type: email
+  endpoint: PrivacyOfficer@dnb.com
+  template: ccpa-art1798
+  locale: en
+  required_fields:
+  - full_name
+  - email
+  supports_suppression: true
+  expected_response_days: 45
 verification:
   ack_keywords:
-    - "request received"
-    - "opt-out"
-    - "confirmation number"
+  - received
+  - request
+  - submitted
   rejection_keywords:
-    - "cannot verify"
+  - cannot
+  - denied
+  - rejected
   human_required_keywords:
-    - "additional information"
-
-notes: |
-  D&B primarily holds business and B2B data, but also maintains profiles
-  on business owners, executives, and sole proprietors. The CCPA opt-out
-  covers California residents. International requests should use GDPR
-  channels where applicable.
+  - verify
+  - identification
+  - upload
+notes: 'Source: CA'

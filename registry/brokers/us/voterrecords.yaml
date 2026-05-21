@@ -3,38 +3,39 @@ name: VoterRecords
 website: https://voterrecords.com
 category: people-search
 jurisdictions:
-  - US
+- US
 laws:
-  - CCPA
+- CCPA
 data_sensitivity: 4
 priority: medium
-
 opt_out:
-  - type: email
-    endpoint: optout@voterrecords.com
-    template: ccpa-deletion
-    locale: en
-    required_fields:
-      - full_name
-      - email
-      - address
-      - state
-    supports_suppression: false
-    expected_response_days: 30
-
+- type: email
+  endpoint: optout@voterrecords.com
+  template: ccpa-deletion
+  locale: en
+  required_fields:
+  - full_name
+  - email
+  - address
+  - state
+  supports_suppression: false
+  expected_response_days: 30
 verification:
   ack_keywords:
-    - "opt-out"
-    - "removal"
-    - "received"
+  - opt-out
+  - removal
+  - received
   rejection_keywords:
-    - "cannot process"
-    - "not found"
+  - cannot process
+  - not found
   human_required_keywords:
-    - "verify identity"
+  - verify identity
+notes: 'VoterRecords publishes publicly available voter registration data. Many
 
-notes: |
-  VoterRecords publishes publicly available voter registration data. Many
   states allow residents to request suppression of their voter data from
-  third-party republishers directly via the state's election authority —
+
+  third-party republishers directly via the state''s election authority —
+
   this may be more effective than opting out from VoterRecords directly.
+
+  '

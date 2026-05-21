@@ -3,44 +3,44 @@ name: FamilyTreeNow
 website: https://www.familytreenow.com
 category: people-search
 jurisdictions:
-  - US
+- US
 laws:
-  - CCPA
+- CCPA
 data_sensitivity: 4
 priority: high
-
 opt_out:
-  - type: web_form
-    url: https://www.familytreenow.com/optout
-    form_spec:
-      steps:
-        - goto: .
-        - fill:
-            "#first_name": "${first_name}"
-            "#last_name": "${last_name}"
-            "#state": "${state}"
-        - solve_captcha:
-            type: recaptcha-v2
-            site_key: NEEDS_RESEARCH_REPLACE_WITH_REAL_SITEKEY
-            provider: capsolver
-        - click: "#submit"
-        - wait_for: ".optout-success"
-        - screenshot: "result"
-      timeout_seconds: 60.0
-      rate_limit_delay: 3.0
-    disabled: true
-
+- type: web_form
+  url: https://www.familytreenow.com/optout
+  form_spec:
+    steps:
+    - goto: .
+    - fill:
+        '#first_name': ${first_name}
+        '#last_name': ${last_name}
+        '#state': ${state}
+    - solve_captcha:
+        type: recaptcha-v2
+        site_key: NEEDS_RESEARCH_REPLACE_WITH_REAL_SITEKEY
+        provider: capsolver
+    - click: '#submit'
+    - wait_for: .optout-success
+    - screenshot: result
+    timeout_seconds: 60.0
+    rate_limit_delay: 3.0
+  disabled: true
 verification:
   ack_keywords:
-    - "opt-out"
-    - "submitted"
-    - "success"
+  - opt-out
+  - submitted
+  - success
   rejection_keywords:
-    - "not found"
+  - not found
   human_required_keywords:
-    - "contact support"
+  - contact support
+notes: 'FamilyTreeNow aggregates genealogical and current address data, making it
 
-notes: |
-  FamilyTreeNow aggregates genealogical and current address data, making it
   a high-sensitivity source. Disabled pending live reCAPTCHA site_key capture.
+
   Inspect the opt-out page DOM for data-sitekey.
+
+  '

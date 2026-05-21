@@ -3,35 +3,33 @@ name: PeopleSmart
 website: https://www.peoplesmart.com
 category: people-search
 jurisdictions:
-  - US
+- US
 laws:
-  - CCPA
+- CCPA
 data_sensitivity: 4
 priority: medium
-
 opt_out:
-  - type: web_form
-    url: https://www.peoplesmart.com/optout-go
-    form_spec:
-      steps:
-        - goto: .
-        - fill:
-            "#first_name": "${first_name}"
-            "#last_name": "${last_name}"
-            "#email": "${email}"
-        - click: "#submit"
-        - wait_for: ".confirmation"
-        - screenshot: "result"
-      timeout_seconds: 45.0
-      rate_limit_delay: 2.0
-
+- type: web_form
+  url: https://www.peoplesmart.com/optout-go
+  form_spec:
+    steps:
+    - goto: .
+    - fill:
+        '#first_name': ${first_name}
+        '#last_name': ${last_name}
+        '#email': ${email}
+    - click: '#submit'
+    - wait_for: .confirmation
+    - screenshot: result
+    timeout_seconds: 45.0
+    rate_limit_delay: 2.0
 verification:
   ack_keywords:
-    - "opt-out"
-    - "submitted"
-    - "removed"
+  - opt-out
+  - submitted
+  - removed
   rejection_keywords:
-    - "not found"
-    - "already removed"
+  - not found
+  - already removed
   human_required_keywords:
-    - "additional verification"
+  - additional verification

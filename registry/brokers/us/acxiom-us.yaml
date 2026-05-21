@@ -1,31 +1,34 @@
 id: acxiom-us
-name: Acxiom (US)
-website: https://www.acxiom.com
-category: marketing
+name: Acxiom LLC
+website: http://acxiom.com
+category: other
 jurisdictions:
-  - US
+- US
 laws:
-  - CCPA
-data_sensitivity: 5
-priority: high
-
+- CCPA
+data_sensitivity: 3
+priority: medium
 opt_out:
-  - type: email
-    endpoint: privacy@acxiom.com
-    template: ccpa-deletion
-    locale: en
-    required_fields:
-      - full_name
-      - email
-      - address
-    supports_suppression: true
-    expected_response_days: 45
-
+- type: email
+  endpoint: consumeradvo@acxiom.com
+  template: ccpa-art1798
+  locale: en
+  required_fields:
+  - full_name
+  - email
+  supports_suppression: true
+  expected_response_days: 45
 verification:
   ack_keywords:
-    - "received"
-    - "request id"
+  - received
+  - request
+  - submitted
   rejection_keywords:
-    - "cannot verify"
+  - cannot
+  - denied
+  - rejected
   human_required_keywords:
-    - "additional information"
+  - verify
+  - identification
+  - upload
+notes: 'Source: CA, VT, SAMPLE'

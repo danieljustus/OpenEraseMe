@@ -3,38 +3,39 @@ name: CoreLogic
 website: https://www.corelogic.com
 category: analytics
 jurisdictions:
-  - US
+- US
 laws:
-  - CCPA
+- CCPA
 data_sensitivity: 5
 priority: medium
-
 opt_out:
-  - type: email
-    endpoint: privacy@corelogic.com
-    template: ccpa-deletion
-    locale: en
-    required_fields:
-      - full_name
-      - address
-      - email
-      - date_of_birth
-    supports_suppression: true
-    expected_response_days: 45
-
+- type: email
+  endpoint: privacy@corelogic.com
+  template: ccpa-deletion
+  locale: en
+  required_fields:
+  - full_name
+  - address
+  - email
+  - date_of_birth
+  supports_suppression: true
+  expected_response_days: 45
 verification:
   ack_keywords:
-    - "request received"
-    - "opt-out"
-    - "confirmation"
+  - request received
+  - opt-out
+  - confirmation
   rejection_keywords:
-    - "cannot verify"
-    - "additional information"
+  - cannot verify
+  - additional information
   human_required_keywords:
-    - "identity verification"
+  - identity verification
+notes: 'CoreLogic is a leading provider of property data, analytics, and
 
-notes: |
-  CoreLogic is a leading provider of property data, analytics, and
   financial, consumer and locational intelligence. They maintain extensive
+
   property and consumer financial data used by mortgage lenders,
+
   insurance companies, and real estate professionals.
+
+  '

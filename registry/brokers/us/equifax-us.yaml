@@ -3,58 +3,59 @@ name: Equifax (US Consumer)
 website: https://www.equifax.com
 category: credit
 jurisdictions:
-  - US
+- US
 laws:
-  - CCPA
+- CCPA
 data_sensitivity: 5
 priority: high
-
 opt_out:
-  - type: web_form
-    url: https://www.equifax.com/personal/privacy/
-    form_spec:
-      steps:
-        - goto: .
-        - fill:
-            "input[name=first_name]": "${first_name}"
-            "input[name=last_name]": "${last_name}"
-            "input[name=ssn_last4]": "${ssn_last4}"
-            "input[name=dob]": "${date_of_birth}"
-            "input[name=address]": "${address}"
-            "input[name=email]": "${email}"
-        - click: "button[type=submit]"
-        - wait_for: ".confirmation"
-        - screenshot: "result"
-      timeout_seconds: 60.0
-      rate_limit_delay: 5.0
-
-  - type: email
-    endpoint: privacy@equifax.com
-    template: ccpa-deletion
-    locale: en
-    required_fields:
-      - full_name
-      - address
-      - email
-      - date_of_birth
-    supports_suppression: true
-    expected_response_days: 45
-
+- type: web_form
+  url: https://www.equifax.com/personal/privacy/
+  form_spec:
+    steps:
+    - goto: .
+    - fill:
+        input[name=first_name]: ${first_name}
+        input[name=last_name]: ${last_name}
+        input[name=ssn_last4]: ${ssn_last4}
+        input[name=dob]: ${date_of_birth}
+        input[name=address]: ${address}
+        input[name=email]: ${email}
+    - click: button[type=submit]
+    - wait_for: .confirmation
+    - screenshot: result
+    timeout_seconds: 60.0
+    rate_limit_delay: 5.0
+- type: email
+  endpoint: privacy@equifax.com
+  template: ccpa-deletion
+  locale: en
+  required_fields:
+  - full_name
+  - address
+  - email
+  - date_of_birth
+  supports_suppression: true
+  expected_response_days: 45
 verification:
   ack_keywords:
-    - "request received"
-    - "opt-out"
-    - "confirmation number"
+  - request received
+  - opt-out
+  - confirmation number
   rejection_keywords:
-    - "cannot verify"
-    - "additional information required"
+  - cannot verify
+  - additional information required
   human_required_keywords:
-    - "identity verification"
-    - "documentation"
+  - identity verification
+  - documentation
+notes: 'Equifax is one of the three major US credit bureaus. As a consumer
 
-notes: |
-  Equifax is one of the three major US credit bureaus. As a consumer
   reporting agency under FCRA, individual credit file access/deletion
+
   rights differ from marketing opt-outs. This entry covers the marketing
+
   data opt-out. For credit freeze, visit equifax.com/personal/credit-report-services/.
+
   SSN last 4 digits required for identity verification.
+
+  '

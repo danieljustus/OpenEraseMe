@@ -3,35 +3,33 @@ name: CheckPeople
 website: https://checkpeople.com
 category: background-check
 jurisdictions:
-  - US
+- US
 laws:
-  - CCPA
+- CCPA
 data_sensitivity: 4
 priority: medium
-
 opt_out:
-  - type: web_form
-    url: https://checkpeople.com/opt-out
-    form_spec:
-      steps:
-        - goto: .
-        - fill:
-            "#first_name": "${first_name}"
-            "#last_name": "${last_name}"
-            "#email": "${email}"
-        - click: "button[type=submit]"
-        - wait_for: ".opt-out-success"
-        - screenshot: "result"
-      timeout_seconds: 45.0
-      rate_limit_delay: 2.0
-
+- type: web_form
+  url: https://checkpeople.com/opt-out
+  form_spec:
+    steps:
+    - goto: .
+    - fill:
+        '#first_name': ${first_name}
+        '#last_name': ${last_name}
+        '#email': ${email}
+    - click: button[type=submit]
+    - wait_for: .opt-out-success
+    - screenshot: result
+    timeout_seconds: 45.0
+    rate_limit_delay: 2.0
 verification:
   ack_keywords:
-    - "opt-out"
-    - "submitted"
-    - "removed"
+  - opt-out
+  - submitted
+  - removed
   rejection_keywords:
-    - "not found"
-    - "already removed"
+  - not found
+  - already removed
   human_required_keywords:
-    - "contact support"
+  - contact support

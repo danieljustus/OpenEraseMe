@@ -3,30 +3,28 @@ name: SearchQuarry
 website: https://www.searchquarry.com
 category: people-search
 jurisdictions:
-  - US
+- US
 laws:
-  - CCPA
+- CCPA
 data_sensitivity: 3
 priority: low
-
 opt_out:
-  - type: email
-    endpoint: optout@searchquarry.com
-    template: ccpa-deletion
-    locale: en
-    required_fields:
-      - full_name
-      - email
-      - address
-    supports_suppression: false
-    expected_response_days: 30
-
+- type: email
+  endpoint: optout@searchquarry.com
+  template: ccpa-deletion
+  locale: en
+  required_fields:
+  - full_name
+  - email
+  - address
+  supports_suppression: false
+  expected_response_days: 30
 verification:
   ack_keywords:
-    - "opt-out"
-    - "received"
-    - "removed"
+  - opt-out
+  - received
+  - removed
   rejection_keywords:
-    - "cannot process"
+  - cannot process
   human_required_keywords:
-    - "additional information"
+  - additional information

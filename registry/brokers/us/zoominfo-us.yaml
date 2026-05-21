@@ -3,40 +3,42 @@ name: ZoomInfo
 website: https://www.zoominfo.com
 category: marketing
 jurisdictions:
-  - US
+- US
 laws:
-  - CCPA
+- CCPA
 data_sensitivity: 4
 priority: high
-
 opt_out:
-  - type: web_form
-    url: https://www.zoominfo.com/about/privacy/privacy-center
-    form_spec:
-      steps:
-        - goto: .
-        - fill:
-            "input[name=email]": "${email}"
-        - click: "button[type=submit]"
-        - wait_for: ".confirmation"
-        - screenshot: "result"
-      timeout_seconds: 45.0
-      rate_limit_delay: 2.0
-
+- type: web_form
+  url: https://www.zoominfo.com/about/privacy/privacy-center
+  form_spec:
+    steps:
+    - goto: .
+    - fill:
+        input[name=email]: ${email}
+    - click: button[type=submit]
+    - wait_for: .confirmation
+    - screenshot: result
+    timeout_seconds: 45.0
+    rate_limit_delay: 2.0
 verification:
   ack_keywords:
-    - "opt-out"
-    - "removal"
-    - "request received"
+  - opt-out
+  - removal
+  - request received
   rejection_keywords:
-    - "not found"
-    - "already opted out"
+  - not found
+  - already opted out
   human_required_keywords:
-    - "identity verification"
+  - identity verification
+notes: 'ZoomInfo aggregates B2B contact and company data including personal
 
-notes: |
-  ZoomInfo aggregates B2B contact and company data including personal
   professional profiles, direct phone numbers, and email addresses.
+
   The opt-out suppresses your profile from their database used by
+
   sales and marketing teams. A profile search may be needed to find
+
   the exact record URL to include in the opt-out request.
+
+  '
