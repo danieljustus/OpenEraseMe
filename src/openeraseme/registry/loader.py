@@ -51,12 +51,21 @@ def broker_schema() -> dict:
     return _BROKER_SCHEMA
 
 
+_BROKER_FILE_CACHE: dict[tuple[str, float], Broker] = {}
+
+
 def load_broker_yaml(path: str | Path) -> Broker:
     path = Path(path)
+    mtime = path.stat().st_mtime
+    cache_key = (str(path), mtime)
+    if cache_key in _BROKER_FILE_CACHE:
+        return _BROKER_FILE_CACHE[cache_key]
     with open(path) as f:
         data = yaml.safe_load(f)
     jsonschema.validate(data, broker_schema())
-    return Broker.model_validate(data)
+    broker = Broker.model_validate(data)
+    _BROKER_FILE_CACHE[cache_key] = broker
+    return broker
 
 
 def load_broker(broker_id: str) -> Broker:
