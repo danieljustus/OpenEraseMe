@@ -11,7 +11,7 @@ priority: medium
 opt_out:
 - type: email
   endpoint: ccpaprivacy@videoamp.com
-  template: ccpa-art1798
+  template: ccpa-deletion
   locale: en
   required_fields:
   - full_name
