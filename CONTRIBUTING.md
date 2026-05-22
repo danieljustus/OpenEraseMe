@@ -127,7 +127,7 @@ unknown fields with `NEEDS_RESEARCH`. Someone else can complete the rest.
 | Suite | Location | Notes |
 |-------|----------|-------|
 | Unit tests | `tests/unit/` | No external dependencies |
-| Integration tests | `tests/integration/` | Requires Docker + Mailpit |
+| Integration tests | `tests/integration/` | Not yet implemented |
 | Registry validation | `tests/smoke/test_broker_validation.py` | Schema + lint checks |
 
 Run everything: `pytest`
