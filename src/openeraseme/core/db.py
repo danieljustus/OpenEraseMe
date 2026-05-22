@@ -77,7 +77,7 @@ def _decrypt_to_temp(path: Path) -> Path:
 
     # Use the user's data directory instead of /tmp to reduce exposure
     # on shared systems if SIGKILL leaves the temp file behind.
-    temp_dir = _db_path(path).parent
+    temp_dir = _db_path(str(path)).parent
     temp_dir.mkdir(parents=True, exist_ok=True)
     with tempfile.NamedTemporaryFile(delete=False, suffix=".db", dir=temp_dir) as tmp:
         tmp.write(decrypted)

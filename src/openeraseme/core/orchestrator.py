@@ -37,15 +37,17 @@ def plan_campaign(
         category=category,
     )
 
-    eligible = [b for b in brokers if _select_channel(b) is not None]
+    channels: list[tuple[Broker, dict[str, Any]]] = []
+    for broker in brokers:
+        ch = _select_channel(broker)
+        if ch is not None:
+            channels.append((broker, ch))
 
-    if max_brokers and len(eligible) > max_brokers:
-        eligible = eligible[:max_brokers]
+    if max_brokers and len(channels) > max_brokers:
+        channels = channels[:max_brokers]
 
     planned: list[dict[str, Any]] = []
-    for broker in eligible:
-        channel = _select_channel(broker)
-
+    for broker, channel in channels:
         request_id = create_removal_request(
             broker_id=broker.id,
             channel=channel["type"],
