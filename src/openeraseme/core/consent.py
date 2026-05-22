@@ -41,6 +41,7 @@ def issue_token(command: str, ttl: int = TOKEN_TTL) -> str:
     token_file = _consent_dir() / f"consent_{token}.json"
     with open(token_file, "w") as f:
         f.write(payload)
+    os.chmod(token_file, 0o600)
     return token
 
 
@@ -69,6 +70,13 @@ def verify_token(command: str, token: str) -> bool:
     if int(time.time()) > expires_at:
         token_file.unlink(missing_ok=True)
         return False
+
+    # Ensure restrictive permissions on existing token files
+    try:
+        if token_file.stat().st_mode & 0o777 != 0o600:
+            os.chmod(token_file, 0o600)
+    except OSError:
+        pass
 
     return True
 
@@ -107,6 +115,12 @@ def list_tokens() -> list[dict]:
             f.unlink(missing_ok=True)
             continue
         token_id = f.stem.replace("consent_", "")
+        # Ensure restrictive permissions on existing token files
+        try:
+            if f.stat().st_mode & 0o777 != 0o600:
+                os.chmod(f, 0o600)
+        except OSError:
+            pass
         tokens.append(
             {
                 "token": token_id,

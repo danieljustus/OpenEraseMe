@@ -63,6 +63,12 @@ class TestIssueToken:
         t2 = issue_token("execute")
         assert t1 != t2
 
+    def test_issue_sets_file_permissions(self, _isolated_consent_dir):
+        token = issue_token("execute")
+        token_file = _isolated_consent_dir / f"consent_{token}.json"
+        mode = token_file.stat().st_mode & 0o777
+        assert mode == 0o600
+
 
 class TestVerifyToken:
     def test_valid_token_returns_true(self):
@@ -115,6 +121,15 @@ class TestVerifyToken:
         token_file = _isolated_consent_dir / f"consent_{token}.json"
         token_file.write_text(json.dumps(payload))
         assert verify_token("execute", token) is True
+
+    def test_verify_fixes_permissions(self, _isolated_consent_dir):
+        """verify_token should fix permissions on existing token files."""
+        token = issue_token("execute")
+        token_file = _isolated_consent_dir / f"consent_{token}.json"
+        os.chmod(token_file, 0o644)
+        assert verify_token("execute", token) is True
+        mode = token_file.stat().st_mode & 0o777
+        assert mode == 0o600
 
 
 class TestConsumeToken:
@@ -174,6 +189,15 @@ class TestListTokens:
         t = next(t for t in tokens if t["token"] == token)
         assert t["command"] == "send-reply"
         assert t["expires_at"] - t["issued_at"] == 3600
+
+    def test_list_fixes_permissions(self, _isolated_consent_dir):
+        """list_tokens should fix permissions on existing token files."""
+        token = issue_token("execute")
+        token_file = _isolated_consent_dir / f"consent_{token}.json"
+        os.chmod(token_file, 0o644)
+        list_tokens()
+        mode = token_file.stat().st_mode & 0o777
+        assert mode == 0o600
 
 
 class TestCheckConsent:
