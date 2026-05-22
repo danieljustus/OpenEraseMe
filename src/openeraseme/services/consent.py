@@ -20,6 +20,7 @@ def handle_grant(
     revoke: str | None = None,
     revoke_all: bool = False,
     list_tokens: bool = False,
+    dry_run: bool = False,
     output_format: str = "text",
 ) -> str:
     if list_tokens:
@@ -39,20 +40,64 @@ def handle_grant(
         return "\n".join(lines)
 
     if revoke:
+        if dry_run:
+            if output_format == "json":
+                return json.dumps(
+                    {"revoke": revoke, "dry_run": True},
+                    indent=2,
+                )
+            return f"[DRY RUN] Would revoke token: {revoke}"
         if revoke_token(revoke):
             return f"Token revoked: {revoke}"
         import typer
 
-        typer.echo(f"Token not found: {revoke}", err=True)
+        typer.echo(
+            f"Token not found: {revoke}. Run 'openeraseme grant --list' to see active tokens.",
+            err=True,
+        )
         raise typer.Exit(1)
 
     if revoke_all:
+        if dry_run:
+            tokens = _list_tokens()
+            if output_format == "json":
+                return json.dumps(
+                    {
+                        "revoke_all": True,
+                        "token_count": len(tokens),
+                        "dry_run": True,
+                    },
+                    indent=2,
+                )
+            return f"[DRY RUN] Would revoke {len(tokens)} token(s)."
         tokens = _list_tokens()
         if not tokens:
             return "No active tokens to revoke."
         for t in tokens:
             consume_token(t["token"])
         return f"Revoked {len(tokens)} token(s)."
+
+    if dry_run:
+        expires_at = int(time.time()) + ttl
+        if output_format == "json":
+            return json.dumps(
+                {
+                    "command": command,
+                    "ttl": ttl,
+                    "expires_at": expires_at,
+                    "dry_run": True,
+                },
+                indent=2,
+            )
+        lines = [
+            "[DRY RUN] Would issue consent token:",
+            f"  Command: {command}",
+            f"  TTL: {ttl}s",
+            f"  Expires: {datetime.fromtimestamp(expires_at).isoformat()}",
+            "",
+            f"Use: OPENERASEME_CONSENT=\u003ctoken\u003e openeraseme {command} ...",
+        ]
+        return "\n".join(lines)
 
     token = issue_token(command, ttl=ttl)
 

@@ -26,6 +26,7 @@ from openeraseme.services.campaign import (
 from openeraseme.services.captcha import handle_solve_captcha
 from openeraseme.services.consent import handle_grant
 from openeraseme.services.db import handle_db_init
+from openeraseme.services.doctor import handle_doctor
 from openeraseme.services.export import handle_export
 from openeraseme.services.inbox import handle_poll_inbox
 from openeraseme.services.manual_task import (
@@ -173,6 +174,13 @@ def main(ctx: typer.Context, output: OutputFormat = OutputFormat.text) -> None:
 def version() -> None:
     result = handle_version()
     console.print(result, markup=False, soft_wrap=True)
+
+
+@app.command()
+def doctor(ctx: typer.Context) -> None:
+    """Run environment checks and report status."""
+    result = handle_doctor(ctx.obj["output"])
+    _render(ctx.obj["output"], result)
 
 
 @app.command()
@@ -352,6 +360,11 @@ def grant(
         "--list",
         help="List active tokens",
     ),
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        help="Show token without creating it",
+    ),
 ) -> None:
     result = handle_grant(
         command,
@@ -359,6 +372,7 @@ def grant(
         revoke,
         revoke_all,
         list_tokens,
+        dry_run,
         ctx.obj["output"],
     )
     _render(ctx.obj["output"], result)
@@ -441,8 +455,13 @@ def tick(
         "--dry-run",
         help="Show actions without executing",
     ),
+    batch_size: int = typer.Option(
+        None,
+        "--batch-size",
+        help="Limit tick to N requests per run",
+    ),
 ) -> None:
-    result = handle_tick(dry_run, ctx.obj["output"])
+    result = handle_tick(dry_run, batch_size, ctx.obj["output"])
     _render(ctx.obj["output"], result)
 
 
@@ -497,11 +516,17 @@ def run_web_form(
         "--screenshots",
         help="Directory for screenshots",
     ),
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        help="Show form steps without executing",
+    ),
 ) -> None:
     result = handle_run_web_form(
         broker_id,
         headed,
         screenshot_dir,
+        dry_run,
         ctx.obj["output"],
     )
     _render(ctx.obj["output"], result)
@@ -652,12 +677,18 @@ def solve_captcha_cmd(
         prompt=True,
         help="Page URL where captcha appears",
     ),
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        help="Show captcha parameters without solving",
+    ),
 ) -> None:
     result = handle_solve_captcha(
         provider,
         api_key,
         site_key,
         page_url,
+        dry_run,
         ctx.obj["output"],
     )
     _render(ctx.obj["output"], result)
@@ -750,12 +781,18 @@ def schedule_install(
         "--yes",
         help="Skip confirmation prompt",
     ),
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        help="Show scheduler configs without installing",
+    ),
 ) -> None:
     result = handle_schedule_install(
         platform,
         tick_hour,
         tick_minute,
         yes,
+        dry_run,
         ctx.obj["output"],
     )
     _render(ctx.obj["output"], result)

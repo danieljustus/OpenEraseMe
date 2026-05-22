@@ -409,17 +409,6 @@ def _extract_address(field: Any) -> str:
 
 
 def _parse_date(value: Any) -> datetime | None:
-    if value is None:
-        return None
-    if isinstance(value, str):
-        for fmt in (
-            "%Y-%m-%dT%H:%M:%S%z",
-            "%Y-%m-%dT%H:%M:%S",
-            "%Y-%m-%d %H:%M:%S %z",
-            "%a, %d %b %Y %H:%M:%S %z",
-        ):
-            try:
-                return datetime.strptime(value, fmt)
-            except ValueError:
-                continue
-    return None
+    from openeraseme.core.datetime_utils import parse_iso_datetime
+
+    return parse_iso_datetime(value)
