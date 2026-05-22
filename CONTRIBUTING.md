@@ -121,6 +121,8 @@ unknown fields with `NEEDS_RESEARCH`. Someone else can complete the rest.
 - All CLI output must support `--output {text,json}`.
 - All models must use pydantic v2.
 - Default to no comments — only add one when the *why* is non-obvious.
+- Pin all GitHub Actions to a release tag or commit SHA (e.g. `uses: owner/action@v1.2.3`).
+  Dependabot is configured to propose upgrades automatically.
 
 ### Testing
 
