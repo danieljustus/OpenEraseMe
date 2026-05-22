@@ -59,7 +59,7 @@ source: '<Where you found this broker>'
 opt_out:
   - type: email
     endpoint: <privacy@broker.com>
-    template: <ccpa-art1798|gdpr-art17>
+    template: <ccpa-deletion|gdpr-art17>
     locale: <en|de|...>
     required_fields:
       - full_name
@@ -169,7 +169,7 @@ source: 'Company privacy page'
 opt_out:
   - type: email
     endpoint: privacy@datamax.example.com
-    template: ccpa-art1798
+    template: ccpa-deletion
     locale: en
     required_fields:
       - full_name

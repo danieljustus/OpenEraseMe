@@ -205,7 +205,7 @@ def generate_broker_yaml(broker: dict, output_dir: str) -> str:
         yaml_content['opt_out'] = [{
             'type': 'email',
             'endpoint': broker['email'],
-            'template': 'ccpa-art1798',
+            'template': 'ccpa-deletion',
             'locale': 'en',
             'required_fields': ['full_name', 'email'],
             'supports_suppression': True,
@@ -286,7 +286,7 @@ def main():
     parser.add_argument('--input', help='Input file with scan results (JSON)')
     parser.add_argument('--output-dir', default='registry/brokers/us', help='Output directory for YAML files')
     parser.add_argument('--validate-all', action='store_true', help='Validate all existing broker YAML files')
-    parser.add_argument('--downloads-dir', default='/Users/daniel/Downloads/databroker', help='Directory containing registry CSV files')
+    parser.add_argument('--downloads-dir', default='./downloads/databroker', help='Directory containing registry CSV files')
     
     args = parser.parse_args()
     
