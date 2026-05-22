@@ -127,6 +127,8 @@ unknown fields with `NEEDS_RESEARCH`. Someone else can complete the rest.
 - Python 3.11+ with type annotations.
 - Format with `ruff format`.
 - All CLI output must support `--output {text,json}`.
+- All commands return a non-zero exit code on failure for both text and JSON output.
+  `_render` is the single place that raises `typer.Exit(1)` for failed `CliResult` instances.
 - All models must use pydantic v2.
 - Default to no comments — only add one when the *why* is non-obvious.
 - Pin all GitHub Actions to a release tag or commit SHA (e.g. `uses: owner/action@v1.2.3`).
