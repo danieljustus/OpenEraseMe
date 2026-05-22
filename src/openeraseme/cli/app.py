@@ -26,6 +26,7 @@ from openeraseme.services.campaign import (
 from openeraseme.services.captcha import handle_solve_captcha
 from openeraseme.services.consent import handle_grant
 from openeraseme.services.db import handle_db_init
+from openeraseme.services.doctor import handle_doctor
 from openeraseme.services.export import handle_export
 from openeraseme.services.inbox import handle_poll_inbox
 from openeraseme.services.manual_task import (
@@ -173,6 +174,13 @@ def main(ctx: typer.Context, output: OutputFormat = OutputFormat.text) -> None:
 def version() -> None:
     result = handle_version()
     console.print(result, markup=False, soft_wrap=True)
+
+
+@app.command()
+def doctor(ctx: typer.Context) -> None:
+    """Run environment checks and report status."""
+    result = handle_doctor(ctx.obj["output"])
+    _render(ctx.obj["output"], result)
 
 
 @app.command()
