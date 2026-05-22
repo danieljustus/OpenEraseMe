@@ -67,15 +67,11 @@ def load_broker(broker_id: str) -> Broker:
     raise FileNotFoundError(msg)
 
 
-_BROKER_CACHE: dict[tuple[str, tuple[tuple[str, float], ...]], list[Broker]] = {}
+_BROKER_CACHE: dict[tuple[str, float], list[Broker]] = {}
 
 
-def _broker_cache_key(registry_dir: Path) -> tuple[str, tuple[tuple[str, float], ...]]:
-    mtimes: list[tuple[str, float]] = []
-    for yml in sorted(registry_dir.rglob("*.yaml")):
-        if not yml.name.startswith("_"):
-            mtimes.append((str(yml), yml.stat().st_mtime))
-    return (str(registry_dir), tuple(mtimes))
+def _broker_cache_key(registry_dir: Path) -> tuple[str, float]:
+    return (str(registry_dir), registry_dir.stat().st_mtime)
 
 
 def load_all_brokers(
