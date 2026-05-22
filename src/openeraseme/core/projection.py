@@ -6,23 +6,9 @@ import json
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
+from openeraseme.core.datetime_utils import parse_iso_datetime as _parse_ts
 from openeraseme.core.db import get_connection
 from openeraseme.core.events import append_event
-
-
-def _parse_ts(value: str) -> datetime | None:
-    if not value:
-        return None
-    for fmt in (
-        "%Y-%m-%dT%H:%M:%S",
-        "%Y-%m-%dT%H:%M:%S%z",
-        "%Y-%m-%d %H:%M:%S",
-    ):
-        try:
-            return datetime.strptime(value.rstrip("Z"), fmt).replace(tzinfo=UTC)
-        except ValueError:
-            continue
-    return None
 
 
 def _next_status(event_type: str) -> str | None:

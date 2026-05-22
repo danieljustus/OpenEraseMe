@@ -325,19 +325,4 @@ def apply_tick_actions(
     return results
 
 
-def _parse_dt(value: Any) -> datetime | None:
-    if value is None:
-        return None
-    if isinstance(value, datetime):
-        return value
-    if isinstance(value, str):
-        for fmt in (
-            "%Y-%m-%dT%H:%M:%S",
-            "%Y-%m-%dT%H:%M:%S%z",
-            "%Y-%m-%d %H:%M:%S",
-        ):
-            try:
-                return datetime.strptime(value.rstrip("Z"), fmt).replace(tzinfo=UTC)
-            except ValueError:
-                continue
-    return None
+from openeraseme.core.datetime_utils import parse_iso_datetime as _parse_dt
