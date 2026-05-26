@@ -1,0 +1,43 @@
+name: Publish Redirect Package to PyPI
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version for the redirect package (e.g. 0.1.3)'
+        required: true
+        default: '0.1.3'
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    name: Build & publish openeraseme redirect
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi-openeraseme
+      url: https://pypi.org/p/openeraseme
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+
+      - name: Build redirect package
+        working-directory: redirect/openeraseme
+        run: uv build
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: redirect/openeraseme/dist
