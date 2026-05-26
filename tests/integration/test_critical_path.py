@@ -30,14 +30,20 @@ def db_path():
 
     close_connection()
     with tempfile.TemporaryDirectory() as d:
-        old = os.environ.get("SYMERASEME_DB_DIR")
+        old_dir = os.environ.get("SYMERASEME_DB_DIR")
+        old_encrypt = os.environ.get("SYMERASEME_ENCRYPT_DB")
         os.environ["SYMERASEME_DB_DIR"] = str(d)
+        os.environ["SYMERASEME_ENCRYPT_DB"] = ""
         yield Path(d)
         close_connection()
-        if old is not None:
-            os.environ["SYMERASEME_DB_DIR"] = old
+        if old_dir is not None:
+            os.environ["SYMERASEME_DB_DIR"] = old_dir
         else:
             os.environ.pop("SYMERASEME_DB_DIR", None)
+        if old_encrypt is not None:
+            os.environ["SYMERASEME_ENCRYPT_DB"] = old_encrypt
+        else:
+            os.environ.pop("SYMERASEME_ENCRYPT_DB", None)
 
 
 @pytest.fixture
@@ -142,7 +148,7 @@ class TestPlanExecuteTickStatus:
         from symeraseme.core.events import list_campaigns
 
         camps = list_campaigns()
-        eu_camp = next(c for c in camps if c["id"] == "eu-only")
+        eu_camp = next((c for c in camps if c["id"] == "eu-only"), None)
         assert eu_camp is not None
 
 
@@ -221,12 +227,13 @@ class TestIdentityRoundTrip:
 
         vault.delete_profile()
 
-    def test_load_nonexistent_raises(self, fake_keyring, monkeypatch):
+    def test_load_nonexistent_raises(self, fake_keyring, monkeypatch, tmp_path):
         """Loading a profile that does not exist raises FileNotFoundError."""
         import symeraseme.core.identity as vault
 
-        monkeypatch.setenv("SYMERASEME_IDENTITY_PATH", "/tmp/_nonexistent_integration_identity.enc")
-        Path("/tmp/_nonexistent_integration_identity.enc").unlink(missing_ok=True)
+        identity_path = tmp_path / "_nonexistent_integration_identity.enc"
+        monkeypatch.setenv("SYMERASEME_IDENTITY_PATH", str(identity_path))
+        identity_path.unlink(missing_ok=True)
 
         with pytest.raises(FileNotFoundError):
             vault.load_profile()
@@ -642,7 +649,7 @@ class TestCliSmoke:
         assert "request_state" in names
 
     def test_grant_and_revoke_cli(self, monkeypatch, tmp_path):
-        """CLI grant command issues and can revoke tokens."""
+        """CLI grant command issues a consent token."""
         consent_dir = tmp_path / "consent"
         consent_dir.mkdir()
         monkeypatch.setenv("SYMERASEME_DATA_DIR", str(consent_dir))
