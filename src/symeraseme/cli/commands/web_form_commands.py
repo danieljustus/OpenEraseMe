@@ -8,6 +8,7 @@ from symeraseme.cli.console import render_result
 from symeraseme.services.auto_confirm import handle_auto_confirm
 from symeraseme.services.captcha import handle_solve_captcha
 from symeraseme.services.manual_task import (
+    handle_manual_tasks_cleanup,
     handle_manual_tasks_complete,
     handle_manual_tasks_list,
     handle_manual_tasks_show,
@@ -174,6 +175,22 @@ def manual_tasks_complete(
     result = handle_manual_tasks_complete(
         task_id,
         notes,
+        ctx.obj["output"],
+    )
+    render_result(ctx.obj["output"], result)
+
+
+@manual_tasks_app.command(name="cleanup")
+def manual_tasks_cleanup(
+    ctx: typer.Context,
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        help="Show what would be removed without deleting",
+    ),
+) -> None:
+    result = handle_manual_tasks_cleanup(
+        dry_run,
         ctx.obj["output"],
     )
     render_result(ctx.obj["output"], result)

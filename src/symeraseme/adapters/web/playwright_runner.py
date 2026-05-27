@@ -66,7 +66,7 @@ async def run_web_form(
 
     screenshot_dir_path = Path(screenshot_dir) if screenshot_dir else None
     if screenshot_dir_path:
-        screenshot_dir_path.mkdir(parents=True, exist_ok=True)
+        screenshot_dir_path.mkdir(parents=True, exist_ok=True, mode=0o700)
 
     async with async_playwright() as pw:
         browser = await pw.chromium.launch(headless=headless)
@@ -234,12 +234,15 @@ def _capture_error(exc: Exception, current_url: str) -> str:
 
 
 async def _save_screenshot(page: Any, directory: Path, name: str) -> Path:
-    """Save a page screenshot."""
+    """Save a page screenshot with restrictive permissions."""
+    import os
+
     timestamp = time.strftime("%Y%m%d-%H%M%S")
     safe_name = "".join(c if c.isalnum() or c in "-_" else "_" for c in name)
     filename = f"{timestamp}_{safe_name}.png"
     path = directory / filename
     await page.screenshot(path=str(path), full_page=True)
+    os.chmod(path, 0o600)
     return path
 
 

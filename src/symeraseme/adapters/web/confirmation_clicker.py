@@ -113,7 +113,7 @@ async def auto_confirm(
     """Detect confirmation links in a broker reply and click them via Playwright."""
     screenshot_dir_path = Path(screenshot_dir) if screenshot_dir else None
     if screenshot_dir_path:
-        screenshot_dir_path.mkdir(parents=True, exist_ok=True)
+        screenshot_dir_path.mkdir(parents=True, exist_ok=True, mode=0o700)
 
     allowed_domains: frozenset[str] | None = None
     if from_addr:
@@ -263,10 +263,14 @@ def _capture_clicker_error(exc: Exception, current_url: str) -> str:
 
 
 async def _save_screenshot(page: Any, directory: Path, name: str) -> Path:
+    """Save a page screenshot with restrictive permissions."""
+    import os
+
     timestamp = time.strftime("%Y%m%d-%H%M%S")
     safe_name = "".join(c if c.isalnum() or c in "-_" else "_" for c in name)
     path = directory / f"{timestamp}_{safe_name}.png"
     await page.screenshot(path=str(path), full_page=True)
+    os.chmod(path, 0o600)
     return path
 
 

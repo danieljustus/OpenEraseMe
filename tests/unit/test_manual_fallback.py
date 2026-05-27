@@ -12,6 +12,8 @@ from symeraseme.core.manual_fallback import (
     FormState,
     ManualTask,
     _instructions_for_reason,
+    _redact_identity_values,
+    _tasks_dir,
     capture_form_state,
     create_manual_task,
     list_manual_tasks,
@@ -414,3 +416,61 @@ class TestDbIntegration:
 
             os.unlink(db_path)
             close_connection()
+
+
+class TestRedactionAndPermissions:
+    """Tests for PII redaction and restrictive file permissions."""
+
+    def test_redact_identity_values_with_profile(self):
+        from symeraseme.registry.schema import IdentityProfile
+
+        profile = IdentityProfile(
+            full_name="Jane Doe",
+            email_addresses=["jane@example.com"],
+            phone_numbers=["+1-555-1234"],
+        )
+        html = "<html>Jane Doe jane@example.com +1-555-1234</html>"
+        redacted = _redact_identity_values(html, profile)
+        assert "Jane Doe" not in redacted
+        assert "jane@example.com" not in redacted
+        assert "+1-555-1234" not in redacted
+        assert "[REDACTED-NAME]" in redacted
+        assert "[REDACTED-EMAIL]" in redacted
+        assert "[REDACTED-PHONE]" in redacted
+
+    def test_redact_identity_values_fallback_regex(self):
+        html = "<html>Contact us at john@test.com or 555-123-4567</html>"
+        redacted = _redact_identity_values(html)
+        assert "john@test.com" not in redacted
+        assert "555-123-4567" not in redacted
+        assert "[REDACTED-EMAIL]" in redacted
+        assert "[REDACTED-PHONE]" in redacted
+
+    def test_tasks_dir_created_with_restrictive_permissions(self, tmp_path):
+        with patch("symeraseme.core.manual_fallback.MANUAL_TASKS_DIR", str(tmp_path / "tasks")):
+            tasks_dir = _tasks_dir()
+            assert tasks_dir.exists()
+            perms = tasks_dir.stat().st_mode & 0o777
+            assert perms == 0o700, f"Expected 0o700 permissions, got {oct(perms)}"
+
+    @patch("symeraseme.core.manual_fallback.get_connection")
+    def test_html_snapshot_has_restrictive_permissions(self, mock_get_conn, tmp_path):
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_cursor.lastrowid = 1
+        mock_conn.execute.return_value = mock_cursor
+        mock_get_conn.return_value = mock_conn
+
+        with patch("symeraseme.core.manual_fallback._tasks_dir", return_value=tmp_path):
+            task = create_manual_task(
+                request_id=1,
+                reason="timeout",
+                form_url="https://test.com",
+                html_snapshot="<html><body>Form</body></html>",
+            )
+
+        assert task.html_snapshot_path != ""
+        saved_file = tmp_path / Path(task.html_snapshot_path).name
+        assert saved_file.exists()
+        perms = saved_file.stat().st_mode & 0o777
+        assert perms == 0o600, f"Expected 0o600 permissions, got {oct(perms)}"
