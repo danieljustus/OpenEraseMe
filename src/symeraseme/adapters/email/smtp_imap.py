@@ -290,7 +290,7 @@ def get_message(
 
     try:
         mail.select(folder)
-        status, data = mail.fetch(message_id.encode(), "(RFC822)")
+        status, data = mail.fetch(message_id, "(RFC822)")
         if status != "OK" or not data or not data[0]:
             mail.logout()
             msg = f"Message {message_id} not found"
