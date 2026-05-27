@@ -13,6 +13,7 @@ from symeraseme.adapters.web.playwright_runner import (
     run_web_form as _run_form,
 )
 from symeraseme.core.identity import load_profile, profile_exists
+from symeraseme.core.manual_fallback import create_manual_task
 from symeraseme.registry.loader import load_broker
 from symeraseme.registry.schema import WebFormOptOut
 
@@ -104,6 +105,19 @@ def handle_run_web_form(
         )
         raise typer.Exit(1) from e
 
+    task = None
+    if not result.success:
+        task = create_manual_task(
+            broker_id=broker_id,
+            broker_name=broker.name,
+            form_url=url,
+            reason="generic_error",
+            screenshot_path=result.screenshot_path or "",
+            step_index=result.step_index,
+            total_steps=result.total_steps,
+            error_message=result.error,
+        )
+
     if output_format == "json":
         return json.dumps(
             {
@@ -113,6 +127,7 @@ def handle_run_web_form(
                 "total_steps": result.total_steps,
                 "error": result.error,
                 "screenshot_path": result.screenshot_path,
+                "task_id": task.id if task else None,
             },
             indent=2,
         )
@@ -120,10 +135,11 @@ def handle_run_web_form(
     if result.success:
         return f"Web form completed successfully ({result.total_steps} steps)."
 
-    typer.echo(
+    msg = (
         f"Web form failed at step {result.step_index + 1}/{result.total_steps}: {result.error}. "
-        "A manual task has been created. Run 'symeraseme manual-tasks list' to see it.",
+        f"Manual task #{task.id} created. Run 'symeraseme manual-tasks list' to see it."
     )
+    typer.echo(msg)
     if result.screenshot_path:
         typer.echo(f"Screenshot saved to: {result.screenshot_path}")
     raise typer.Exit(1)
