@@ -241,9 +241,11 @@ def handle_run_web_form(
     if result.success:
         return f"Web form completed successfully ({result.total_steps} steps)."
 
+    task_id = task.id if task else "N/A"
     msg = (
-        f"Web form failed at step {result.step_index + 1}/{result.total_steps}: {result.error}. "
-        f"Manual task #{task.id if task else 'N/A'} created. Run 'symeraseme manual-tasks list' to see it."
+        f"Web form failed at step {result.step_index + 1}/{result.total_steps}: "
+        f"{result.error}. Manual task #{task_id} created. "
+        "Run 'symeraseme manual-tasks list' to see it."
     )
     typer.echo(msg)
     if result.screenshot_path:
