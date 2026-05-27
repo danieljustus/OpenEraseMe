@@ -78,6 +78,10 @@ def requests_list(
 def brokers_list_cmd(
     ctx: typer.Context,
     jurisdiction: str = typer.Option(None, help="Filter by jurisdiction (e.g. DE, US, EU)"),
+    law: str = typer.Option(
+        None,
+        help="Filter by law (e.g. GDPR, CCPA, CPRA, LGPD, PIPEDA)",
+    ),
     priority: str = typer.Option(None, help="Filter by priority: high, medium, low"),
     category: str = typer.Option(
         None,
@@ -93,6 +97,7 @@ def brokers_list_cmd(
     """List brokers in the registry, optionally filtered."""
     result = handle_brokers_list(
         jurisdiction=jurisdiction,
+        law=law,
         priority=priority,
         category=category,
         include_disabled=include_disabled,

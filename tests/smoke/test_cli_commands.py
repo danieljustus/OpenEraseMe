@@ -83,6 +83,22 @@ class TestBrokersList:
         for broker in data["brokers"]:
             assert "DE" in broker["jurisdictions"]
 
+    def test_list_filter_by_law(self):
+        from .conftest import assert_json_output
+
+        result = invoke("--output", "json", "brokers", "list", "--law", "GDPR")
+        data = assert_json_output(result)
+        for broker in data["brokers"]:
+            assert "GDPR" in broker["laws"]
+
+    def test_list_jurisdiction_gdpr_returns_zero(self):
+        """--jurisdiction GDPR must return zero results (GDPR is a law, not jurisdiction)."""
+        from .conftest import assert_json_output
+
+        result = invoke("--output", "json", "brokers", "list", "--jurisdiction", "GDPR")
+        data = assert_json_output(result)
+        assert data["count"] == 0
+
     def test_list_excludes_disabled_by_default(self):
         from .conftest import assert_json_output
 

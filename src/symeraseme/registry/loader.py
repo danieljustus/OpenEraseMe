@@ -117,6 +117,7 @@ def _quick_parse_meta(yml_path: Path) -> dict | None:
 def _meta_matches_filters(
     meta: dict,
     jurisdiction: str | None,
+    law: str | None,
     priority: str | None,
     category: str | None,
     include_disabled: bool,
@@ -124,6 +125,8 @@ def _meta_matches_filters(
     if not include_disabled and meta.get("disabled", False):
         return False
     if jurisdiction and jurisdiction not in meta.get("jurisdictions", []):
+        return False
+    if law and law not in meta.get("laws", []):
         return False
     if priority and meta.get("priority") != priority:
         return False
@@ -135,6 +138,7 @@ def _meta_matches_filters(
 def load_all_brokers(
     registry_dir: str | Path | None = None,
     jurisdiction: str | None = None,
+    law: str | None = None,
     priority: str | None = None,
     category: str | None = None,
     include_disabled: bool = False,
@@ -154,13 +158,14 @@ def load_all_brokers(
 
     registry_path = Path(registry_dir)
     cache_key = _broker_cache_key(registry_path)
-    has_filters = bool(jurisdiction or priority or category)
+    has_filters = bool(jurisdiction or law or priority or category)
 
     # Warm cache: filter from cached brokers.
     if cache_key in _BROKER_CACHE:
         return _filter_brokers(
             _BROKER_CACHE[cache_key],
             jurisdiction=jurisdiction,
+            law=law,
             priority=priority,
             category=category,
             include_disabled=include_disabled,
@@ -183,6 +188,7 @@ def load_all_brokers(
             if not _meta_matches_filters(
                 meta,
                 jurisdiction=jurisdiction,
+                law=law,
                 priority=priority,
                 category=category,
                 include_disabled=include_disabled,
@@ -215,6 +221,7 @@ def load_all_brokers(
     return _filter_brokers(
         brokers,
         jurisdiction=jurisdiction,
+        law=law,
         priority=priority,
         category=category,
         include_disabled=include_disabled,
@@ -225,6 +232,7 @@ def _filter_brokers(
     brokers: list[Broker],
     *,
     jurisdiction: str | None = None,
+    law: str | None = None,
     priority: str | None = None,
     category: str | None = None,
     include_disabled: bool = False,
@@ -234,6 +242,8 @@ def _filter_brokers(
         if not include_disabled and broker.disabled:
             continue
         if jurisdiction and jurisdiction not in broker.jurisdictions:
+            continue
+        if law and law not in [l.value for l in broker.laws]:
             continue
         if priority and broker.priority.value != priority:
             continue

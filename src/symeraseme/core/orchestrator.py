@@ -23,6 +23,7 @@ def plan_campaign(
     *,
     campaign_id: str,
     jurisdiction: str | None = None,
+    law: str | None = None,
     priority: str | None = None,
     category: str | None = None,
     max_brokers: int = 30,
@@ -33,6 +34,7 @@ def plan_campaign(
 
     brokers = load_all_brokers(
         jurisdiction=jurisdiction,
+        law=law,
         priority=priority,
         category=category,
     )

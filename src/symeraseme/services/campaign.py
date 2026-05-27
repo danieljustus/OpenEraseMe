@@ -12,6 +12,7 @@ from symeraseme.core.orchestrator import execute_campaign, get_plan, plan_campai
 def handle_plan_create(
     campaign_id: str,
     jurisdiction: str | None = None,
+    law: str | None = None,
     priority: str | None = None,
     max_brokers: int = 30,
     output_format: str = "text",
@@ -20,6 +21,7 @@ def handle_plan_create(
     result = plan_campaign(
         campaign_id=campaign_id,
         jurisdiction=jurisdiction,
+        law=law,
         priority=priority,
         max_brokers=max_brokers,
     )
