@@ -119,7 +119,9 @@ def execute_request(
         return {"success": False, "error": f"Request {request_id} not found"}
 
     from symeraseme.adapters.email.himalaya import EmailError, send_email
+    from symeraseme.core.identity import load_profile
     from symeraseme.core.templating import render_template
+    from symeraseme.registry.schema import IdentityProfile
 
     broker_name = req["broker_id"]
     events = get_events(request_id)
@@ -128,10 +130,42 @@ def execute_request(
 
     channel_endpoint = payload.get("endpoint", "")
     template_id = req.get("template_id", "")
+    required_fields = payload.get("required_fields", ["full_name", "email_addresses"])
+
+    # Load identity profile for template rendering
+    try:
+        profile = load_profile()
+    except FileNotFoundError:
+        return {
+            "success": False,
+            "error": (
+                "Identity profile not found. "
+                "Run 'symeraseme init-profile' first to create your identity profile."
+            ),
+            "request_id": request_id,
+        }
+
+    # Validate required identity fields
+    missing = []
+    profile_vars = profile.model_dump()
+    for field in required_fields:
+        value = profile_vars.get(field)
+        if value is None or value == [] or value == {} or value == "":
+            missing.append(field)
+    if missing:
+        return {
+            "success": False,
+            "error": (
+                f"Missing required identity fields: {', '.join(missing)}. "
+                f"Run 'symeraseme init-profile' to update your profile."
+            ),
+            "request_id": request_id,
+        }
 
     if dry_run:
         rendered = render_template(
             template_id,
+            profile=profile,
             broker_name=broker_name,
         )
         return {
@@ -146,6 +180,7 @@ def execute_request(
     try:
         rendered = render_template(
             template_id,
+            profile=profile,
             broker_name=broker_name,
         )
         send_result = send_email(

@@ -35,6 +35,26 @@ def _db(tmp_path: tempfile.TemporaryDirectory) -> None:
     os.environ.pop("SYMERASEME_DATA_DIR", None)
 
 
+@pytest.fixture()
+def _fake_profile(monkeypatch):
+    """Provide a mock identity profile for execute tests."""
+    from unittest.mock import MagicMock
+
+    from symeraseme.registry.schema import IdentityProfile
+
+    profile = IdentityProfile(
+        full_name="Jane Doe",
+        email_addresses=["jane@example.com"],
+        phone_numbers=["+1-555-1234"],
+        jurisdictions=["EU"],
+    )
+    monkeypatch.setattr(
+        "symeraseme.core.identity.load_profile",
+        lambda: profile,
+    )
+    return profile
+
+
 class TestPlanCampaign:
     def test_plan_creates_events(self):
         result = plan_campaign(campaign_id="test-plan", max_brokers=5)
@@ -65,7 +85,7 @@ class TestPlanCampaign:
 
 
 class TestExecuteCampaign:
-    def test_dry_run_returns_body(self):
+    def test_dry_run_returns_body(self, _fake_profile):
         plan_campaign(campaign_id="dry-test", max_brokers=1)
         result = execute_campaign("dry-test", dry_run=True)
         assert result["total_planned"] >= 1
@@ -73,8 +93,11 @@ class TestExecuteCampaign:
         r = result["results"][0]
         assert r["success"] is True
         assert r.get("dry_run") is True
+        # Rendered body must contain the profile name and email
+        assert "Jane Doe" in r["body"]
+        assert "jane@example.com" in r["body"]
 
-    def test_execute_send_failure_logged(self):
+    def test_execute_send_failure_logged(self, _fake_profile):
         plan_campaign(campaign_id="fail-test", max_brokers=1)
         requests = list_removal_requests(campaign_id="fail-test")
         assert len(requests) > 0
@@ -83,6 +106,36 @@ class TestExecuteCampaign:
         # Will fail because Himalaya is not installed — that's expected
         assert result["success"] is False
         assert "error" in result
+
+    def test_dry_run_without_profile_fails(self, monkeypatch):
+        monkeypatch.setattr(
+            "symeraseme.core.identity.load_profile",
+            lambda: (_ for _ in ()).throw(FileNotFoundError("no profile")),
+        )
+        plan_campaign(campaign_id="no-profile", max_brokers=1)
+        result = execute_campaign("no-profile", dry_run=True)
+        assert result["total_planned"] >= 1
+        r = result["results"][0]
+        assert r["success"] is False
+        assert "init-profile" in r["error"]
+
+    def test_dry_run_missing_required_fields_fails(self, monkeypatch):
+        from symeraseme.registry.schema import IdentityProfile
+
+        profile = IdentityProfile(
+            full_name="",
+            email_addresses=[],
+        )
+        monkeypatch.setattr(
+            "symeraseme.core.identity.load_profile",
+            lambda: profile,
+        )
+        plan_campaign(campaign_id="missing-fields", max_brokers=1)
+        result = execute_campaign("missing-fields", dry_run=True)
+        assert result["total_planned"] >= 1
+        r = result["results"][0]
+        assert r["success"] is False
+        assert "init-profile" in r["error"]
 
 
 class TestConsent:
