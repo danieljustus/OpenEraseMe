@@ -80,15 +80,16 @@ def list_replies(
 
     result = [dict(row) for row in rows]
     if result:
-        reply_ids = [str(r["id"]) for r in result]
-        id_list = ",".join(reply_ids)
+        reply_ids = [r["id"] for r in result]
+        placeholders = ",".join("?" * len(reply_ids))
         draft_rows = conn.execute(
             f"""SELECT d.id AS draft_id, d.reply_id, d.subject AS draft_subject,
                        d.created_at AS draft_created_at, d.sent_at AS draft_sent_at,
                        d.account
                 FROM reply_drafts d
-                WHERE d.reply_id IN ({id_list})
+                WHERE d.reply_id IN ({placeholders})
                 ORDER BY d.created_at DESC""",
+            reply_ids,
         ).fetchall()
         drafts_by_reply: dict[int, dict[str, Any]] = {}
         for dr in draft_rows:

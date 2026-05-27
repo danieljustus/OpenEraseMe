@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import contextlib
 import email
+import email.utils
 import imaplib
 import logging
 import re
+from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from email.header import decode_header
 from typing import Any
@@ -191,6 +194,135 @@ def poll_inbox(
 
     mail.logout()
     return messages
+
+
+@dataclass
+class Envelope:
+    id: str
+    subject: str
+    from_: str
+    to: str
+    date: datetime | None = None
+    flags: list[str] = field(default_factory=list)
+
+
+@dataclass
+class Message:
+    id: str
+    subject: str
+    from_: str
+    to: str
+    date: datetime | None = None
+    body: str = ""
+    flags: list[str] = field(default_factory=list)
+
+
+def list_messages(
+    folder: str = "INBOX",
+    page_size: int = 20,
+    page: int = 1,
+    *,
+    host: str = "imap.gmail.com",
+    port: int = 993,
+    username: str = "",
+    password: str = "",
+    ssl: bool = True,
+) -> list[Envelope]:
+    """List IMAP messages, returning a Himalaya-compatible Envelope list."""
+    messages = poll_inbox(
+        host=host,
+        port=port,
+        username=username,
+        password=password,
+        ssl=ssl,
+        folder=folder,
+        since_days=30,
+        max_messages=page_size * page,
+    )
+    start = (page - 1) * page_size
+    end = start + page_size
+    page_messages = messages[start:end]
+
+    envelopes: list[Envelope] = []
+    for msg in page_messages:
+        headers = msg.get("headers", {})
+        date_str = headers.get("Date", "")
+        date = None
+        if date_str:
+            with contextlib.suppress(Exception):
+                date = email.utils.parsedate_to_datetime(date_str)
+        envelopes.append(
+            Envelope(
+                id=msg.get("imap_uid", ""),
+                subject=msg.get("subject", ""),
+                from_=msg.get("from_addr", ""),
+                to=headers.get("To", ""),
+                date=date,
+                flags=[],
+            )
+        )
+    return envelopes
+
+
+def get_message(
+    message_id: str,
+    *,
+    host: str = "imap.gmail.com",
+    port: int = 993,
+    username: str = "",
+    password: str = "",
+    ssl: bool = True,
+    folder: str = "INBOX",
+) -> Message:
+    """Fetch a single IMAP message by UID, returning a Himalaya-compatible Message."""
+    try:
+        mail = imaplib.IMAP4_SSL(host, port) if ssl else imaplib.IMAP4(host, port)
+    except Exception as e:
+        msg = f"Failed to connect to {host}:{port}: {e}"
+        raise IMAPError(msg) from e
+
+    try:
+        mail.login(username, password)
+    except Exception as e:
+        mail.logout()
+        msg = f"IMAP login failed for {username}: {e}"
+        raise IMAPError(msg) from e
+
+    try:
+        mail.select(folder)
+        status, data = mail.fetch(message_id, "(RFC822)")
+        if status != "OK" or not data or not data[0]:
+            mail.logout()
+            msg = f"Message {message_id} not found"
+            raise IMAPError(msg)
+        raw: bytes = data[0][1] if isinstance(data[0][1], bytes) else b""
+        if not raw:
+            mail.logout()
+            msg = f"Message {message_id} not found"
+            raise IMAPError(msg)
+        parsed = _parse_email(raw)
+        headers = parsed.get("headers", {})
+        date_str = headers.get("Date", "")
+        date = None
+        if date_str:
+            with contextlib.suppress(Exception):
+                date = email.utils.parsedate_to_datetime(date_str)
+        mail.logout()
+        return Message(
+            id=message_id,
+            subject=parsed.get("subject", ""),
+            from_=parsed.get("from_addr", ""),
+            to=headers.get("To", ""),
+            date=date,
+            body=parsed.get("body", ""),
+            flags=[],
+        )
+    except IMAPError:
+        raise
+    except Exception as e:
+        mail.logout()
+        msg = f"Failed to fetch message {message_id}: {e}"
+        raise IMAPError(msg) from e
 
 
 def match_reply_to_request(

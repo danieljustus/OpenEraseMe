@@ -48,15 +48,15 @@ def plan_campaign(
 
     planned: list[dict[str, Any]] = []
     for broker, channel in channels:
+        template_id = _resolve_template(channel)
         request_id = create_removal_request(
             broker_id=broker.id,
             channel=channel["type"],
             campaign_id=campaign_id,
             jurisdiction=_resolve_jurisdiction(broker, jurisdiction),
-            template_id=_resolve_template(channel),
+            template_id=template_id,
             identity_snapshot_hash="",
         )
-        resolved_template = _resolve_template(channel)
         append_event(
             request_id,
             "PLANNED",
@@ -65,7 +65,7 @@ def plan_campaign(
                 "broker_website": broker.website,
                 "channel": channel["type"],
                 "endpoint": channel.get("endpoint", ""),
-                "template": resolved_template,
+                "template": template_id,
                 "locale": channel.get("locale", ""),
                 "expected_response_days": channel.get("expected_response_days", 30),
             },
@@ -76,7 +76,7 @@ def plan_campaign(
                 "broker_id": broker.id,
                 "broker_name": broker.name,
                 "channel": channel["type"],
-                "template": resolved_template,
+                "template": template_id,
             }
         )
 

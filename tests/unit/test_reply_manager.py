@@ -69,6 +69,33 @@ class TestListReplies:
     def test_empty(self):
         assert list_replies() == []
 
+    def test_draft_lookup_uses_parameter_binding(self):
+        """Regression: reply_manager must use ? placeholders for IN clauses.
+
+        Before the fix the draft lookup built ``id_list = ','.join(reply_ids)``
+        and interpolated it into the query with an f-string, bypassing
+        SQLite parameter binding.
+        """
+        conn = get_connection()
+        r1 = _insert_inbox_reply(conn, classified_as="rejected")
+        r2 = _insert_inbox_reply(conn, classified_as="rejected")
+        _ensure_request(conn, 1)
+        conn.execute(
+            "INSERT INTO reply_drafts (reply_id, request_id, draft_body, subject) "
+            "VALUES (?, 1, 'draft one', 'subject one')",
+            (r1,),
+        )
+        conn.execute(
+            "INSERT INTO reply_drafts (reply_id, request_id, draft_body, subject) "
+            "VALUES (?, 1, 'draft two', 'subject two')",
+            (r2,),
+        )
+        conn.commit()
+        replies = list_replies()
+        assert len(replies) == 2
+        draft_ids = {r["draft_id"] for r in replies if "draft_id" in r}
+        assert len(draft_ids) == 2
+
     def test_all_replies(self):
         conn = get_connection()
         _insert_inbox_reply(conn, classified_as="ack")
