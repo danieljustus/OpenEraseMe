@@ -375,8 +375,7 @@ def send_message_smtp(
     from_addr = smtp_config.from_addr
     if not from_addr:
         raise SmtpError(
-            "SYMERASEME_SMTP_FROM is not configured. "
-            "Set it in your environment or .env file."
+            "SYMERASEME_SMTP_FROM is not configured. Set it in your environment or .env file."
         )
 
     recipients = [to]
@@ -415,7 +414,8 @@ def get_email_backend() -> str:
     backend = os.environ.get("SYMERASEME_EMAIL_BACKEND", "smtp").lower().strip()
     if backend not in ("smtp", "himalaya"):
         logger.warning(
-            "Unknown SYMERASEME_EMAIL_BACKEND=%r, falling back to smtp", backend,
+            "Unknown SYMERASEME_EMAIL_BACKEND=%r, falling back to smtp",
+            backend,
         )
         return "smtp"
     return backend
