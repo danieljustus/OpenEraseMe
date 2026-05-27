@@ -4,6 +4,7 @@ import json
 
 from symeraseme.adapters.triage.classifier import ReplyClassifier
 from symeraseme.adapters.triage.responder import generate_rebuttal
+from symeraseme.adapters.triage.scrubber import grant_llm_consent, llm_consent_granted
 from symeraseme.core.db import get_connection, init_db
 from symeraseme.core.events import get_events, get_removal_request
 from symeraseme.core.identity import load_profile, profile_exists
@@ -12,13 +13,36 @@ from symeraseme.core.projection import append_event_and_project
 from symeraseme.registry.loader import load_broker
 
 
+def _ensure_llm_consent(yes: bool = False) -> None:
+    if llm_consent_granted():
+        return
+    if yes:
+        grant_llm_consent()
+        return
+    import typer
+
+    typer.echo(
+        "WARNING: LLM operations may send PII (email addresses, phone numbers, names) "
+        "to third-party LLM providers. A PII scrubber is active, but network "
+        "transmission of scrubbed metadata still occurs."
+    )
+    granted = typer.confirm("Do you consent to sending this data to the LLM provider?")
+    if not granted:
+        typer.echo("LLM consent denied. Use --yes to grant non-interactively.")
+        raise typer.Exit(1)
+    grant_llm_consent()
+    typer.echo("LLM consent granted. This will not be asked again.")
+
+
 def handle_classify_reply(
     request_id: int,
     provider: str | None = None,
     model: str | None = None,
     save: bool = True,
     output_format: str = "text",
+    yes: bool = False,
 ) -> str:
+    _ensure_llm_consent(yes=yes)
     init_db()
 
     req = get_removal_request(request_id)
@@ -163,7 +187,9 @@ def handle_generate_rebuttal(
     model: str | None = None,
     save: bool = True,
     output_format: str = "text",
+    yes: bool = False,
 ) -> str:
+    _ensure_llm_consent(yes=yes)
     init_db()
 
     req = get_removal_request(request_id)
