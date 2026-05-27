@@ -26,7 +26,27 @@ def _profile_path(path: str | None = None) -> Path:
     return Path(raw).expanduser().resolve()
 
 
+def _get_existing_master_key() -> bytes:
+    """Return the stored master key or raise RuntimeError if absent.
+
+    Use this in read/decrypt paths so a missing keyring entry fails
+    fast instead of silently minting a new key that cannot decrypt.
+    """
+    stored = keyring.get_password(SERVICE_NAME, KEYRING_USERNAME)
+    if stored:
+        return bytes.fromhex(stored)
+    msg = (
+        "Identity master key not found in system keyring. "
+        "Run 'symeraseme init-profile' to create a profile and key."
+    )
+    raise RuntimeError(msg)
+
+
 def _get_or_create_master_key() -> bytes:
+    """Return the stored master key, creating one if absent.
+
+    Use this in write/encrypt paths (save_profile, first-time setup).
+    """
     stored = keyring.get_password(SERVICE_NAME, KEYRING_USERNAME)
     if stored:
         return bytes.fromhex(stored)
@@ -71,7 +91,7 @@ def load_profile(path: str | None = None) -> IdentityProfile:
         msg = f"Identity profile not found at {target}. Run 'symeraseme init-profile' first."
         raise FileNotFoundError(msg)
 
-    key = _get_or_create_master_key()
+    key = _get_existing_master_key()
     aesgcm = AESGCM(key)
 
     with open(target, "rb") as f:
@@ -107,3 +127,16 @@ def delete_profile(path: str | None = None) -> None:
 
 def profile_exists(path: str | None = None) -> bool:
     return _profile_path(path).exists()
+
+
+def hash_profile(profile: IdentityProfile) -> str:
+    """Return a deterministic, non-reversible hash of the profile contents.
+
+    Used for audit trails to prove which identity profile version was used
+    for a request without leaking the profile itself.
+    """
+    import hashlib
+    import json
+
+    canonical = json.dumps(profile.model_dump(mode="json"), sort_keys=True)
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()

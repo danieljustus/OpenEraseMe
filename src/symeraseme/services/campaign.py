@@ -2,16 +2,23 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 
 from symeraseme.core.consent import check_consent
 from symeraseme.core.db import init_db
-from symeraseme.core.orchestrator import execute_campaign, get_plan, plan_campaign
+from symeraseme.core.orchestrator import (
+    execute_campaign,
+    execute_campaign_async,
+    get_plan,
+    plan_campaign,
+)
 
 
 def handle_plan_create(
     campaign_id: str,
     jurisdiction: str | None = None,
+    law: str | None = None,
     priority: str | None = None,
     max_brokers: int = 30,
     output_format: str = "text",
@@ -20,6 +27,7 @@ def handle_plan_create(
     result = plan_campaign(
         campaign_id=campaign_id,
         jurisdiction=jurisdiction,
+        law=law,
         priority=priority,
         max_brokers=max_brokers,
     )
@@ -72,12 +80,22 @@ def handle_execute(
         raise typer.Exit(1)
 
     init_db()
-    result = execute_campaign(
-        campaign_id,
-        account=account,
-        batch_size=batch_size,
-        dry_run=dry_run,
-    )
+
+    if account:
+        result = execute_campaign(
+            campaign_id,
+            account=account,
+            batch_size=batch_size,
+            dry_run=dry_run,
+        )
+    else:
+        result = asyncio.run(
+            execute_campaign_async(
+                campaign_id,
+                batch_size=batch_size,
+                dry_run=dry_run,
+            )
+        )
 
     if output_format == "json":
         return json.dumps(result, indent=2, default=str)

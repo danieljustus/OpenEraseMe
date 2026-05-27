@@ -12,6 +12,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
 import time
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -19,6 +20,7 @@ from pathlib import Path
 from typing import Any
 
 from symeraseme.core.db import get_connection
+from symeraseme.registry.schema import IdentityProfile
 
 logger = logging.getLogger(__name__)
 
@@ -74,8 +76,46 @@ class ManualTask:
 
 def _tasks_dir() -> Path:
     tasks_dir = Path(MANUAL_TASKS_DIR).expanduser()
-    tasks_dir.mkdir(parents=True, exist_ok=True)
+    tasks_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
     return tasks_dir
+
+
+def _redact_identity_values(html: str, profile: IdentityProfile | None = None) -> str:
+    """Redact known identity values from an HTML snapshot.
+
+    If *profile* is provided its fields are used directly; otherwise a
+    best-effort regex-based redaction is applied for common PII patterns.
+    """
+    import re
+
+    redacted = html
+
+    if profile is not None:
+        for email in profile.email_addresses:
+            redacted = redacted.replace(email, "[REDACTED-EMAIL]")
+        for phone in profile.phone_numbers:
+            redacted = redacted.replace(phone, "[REDACTED-PHONE]")
+        redacted = redacted.replace(profile.full_name, "[REDACTED-NAME]")
+        for variant in profile.name_variants:
+            redacted = redacted.replace(variant, "[REDACTED-NAME]")
+        for addr in profile.addresses:
+            redacted = redacted.replace(addr.street, "[REDACTED-STREET]")
+            redacted = redacted.replace(addr.city, "[REDACTED-CITY]")
+            redacted = redacted.replace(addr.postal_code, "[REDACTED-POSTAL]")
+        return redacted
+
+    # Fallback: coarse regex-based redaction for common patterns
+    redacted = re.sub(
+        r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b",
+        "[REDACTED-EMAIL]",
+        redacted,
+    )
+    redacted = re.sub(
+        r"\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b",
+        "[REDACTED-PHONE]",
+        redacted,
+    )
+    return redacted
 
 
 def _task_file_path(task_id: int) -> Path:
@@ -275,8 +315,10 @@ def create_manual_task(
     html_path = ""
     if html_snapshot:
         try:
+            redacted_html = _redact_identity_values(html_snapshot)
             html_path = str(_tasks_dir() / f"snapshot_{int(time.time())}.html")
-            Path(html_path).write_text(html_snapshot)
+            Path(html_path).write_text(redacted_html)
+            os.chmod(html_path, 0o600)
         except OSError as e:
             logger.warning("Failed to save HTML snapshot: %s", e)
 

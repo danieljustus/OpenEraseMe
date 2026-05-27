@@ -12,6 +12,7 @@ from symeraseme.registry.schema import EmailOptOut, WebFormOptOut
 
 def handle_brokers_list(
     jurisdiction: str | None = None,
+    law: str | None = None,
     priority: str | None = None,
     category: str | None = None,
     include_disabled: bool = False,
@@ -24,6 +25,7 @@ def handle_brokers_list(
     """
     brokers = load_all_brokers(
         jurisdiction=jurisdiction,
+        law=law,
         priority=priority,
         category=category,
         include_disabled=include_disabled,
@@ -34,6 +36,7 @@ def handle_brokers_list(
             "schema_version": 1,
             "filters": {
                 "jurisdiction": jurisdiction,
+                "law": law,
                 "priority": priority,
                 "category": category,
                 "include_disabled": include_disabled,

@@ -35,6 +35,30 @@ def _db(tmp_path: tempfile.TemporaryDirectory) -> None:
     os.environ.pop("SYMERASEME_DATA_DIR", None)
 
 
+@pytest.fixture()
+def _fake_profile(monkeypatch):
+    """Provide a mock identity profile for execute tests."""
+    from unittest.mock import MagicMock
+
+    from symeraseme.registry.schema import IdentityProfile
+
+    profile = IdentityProfile(
+        full_name="Jane Doe",
+        email_addresses=["jane@example.com"],
+        phone_numbers=["+1-555-1234"],
+        jurisdictions=["EU"],
+    )
+    monkeypatch.setattr(
+        "symeraseme.core.identity.load_profile",
+        lambda: profile,
+    )
+    monkeypatch.setattr(
+        "symeraseme.core.orchestrator.load_profile",
+        lambda: profile,
+    )
+    return profile
+
+
 class TestPlanCampaign:
     def test_plan_creates_events(self):
         result = plan_campaign(campaign_id="test-plan", max_brokers=5)
@@ -51,6 +75,26 @@ class TestPlanCampaign:
         requests = list_removal_requests(campaign_id="test-state")
         assert all(r.get("current_status") == "PLANNED" for r in requests)
 
+    def test_plan_populates_identity_hash(self, _fake_profile):
+        from symeraseme.core.identity import hash_profile
+
+        profile = _fake_profile
+        expected_hash = hash_profile(profile)
+        plan_campaign(campaign_id="test-hash", max_brokers=2)
+        requests = list_removal_requests(campaign_id="test-hash")
+        assert len(requests) > 0
+        assert all(r.get("identity_snapshot_hash") == expected_hash for r in requests)
+
+    def test_plan_without_profile_has_empty_hash(self, monkeypatch):
+        monkeypatch.setattr(
+            "symeraseme.core.identity.load_profile",
+            lambda: (_ for _ in ()).throw(FileNotFoundError("no profile")),
+        )
+        plan_campaign(campaign_id="test-no-hash", max_brokers=2)
+        requests = list_removal_requests(campaign_id="test-no-hash")
+        assert len(requests) > 0
+        assert all(r.get("identity_snapshot_hash") == "" for r in requests)
+
     def test_plan_show(self):
         plan_campaign(campaign_id="show-test", max_brokers=2)
         plan = get_plan(campaign_id="show-test")
@@ -65,7 +109,7 @@ class TestPlanCampaign:
 
 
 class TestExecuteCampaign:
-    def test_dry_run_returns_body(self):
+    def test_dry_run_returns_body(self, _fake_profile):
         plan_campaign(campaign_id="dry-test", max_brokers=1)
         result = execute_campaign("dry-test", dry_run=True)
         assert result["total_planned"] >= 1
@@ -73,16 +117,223 @@ class TestExecuteCampaign:
         r = result["results"][0]
         assert r["success"] is True
         assert r.get("dry_run") is True
+        if "to" in r:
+            assert "Jane Doe" in r["body"]
+            assert "jane@example.com" in r["body"]
+        else:
+            assert "steps" in r or "url" in r
 
-    def test_execute_send_failure_logged(self):
+    def test_execute_send_failure_logged(self, _fake_profile):
         plan_campaign(campaign_id="fail-test", max_brokers=1)
         requests = list_removal_requests(campaign_id="fail-test")
         assert len(requests) > 0
 
-        result = execute_request(requests[0]["id"])
-        # Will fail because Himalaya is not installed — that's expected
+        email_requests = [r for r in requests if r.get("channel") == "email"]
+        if not email_requests:
+            pytest.skip("No email requests in campaign")
+
+        result = execute_request(email_requests[0]["id"])
         assert result["success"] is False
         assert "error" in result
+
+    def test_dry_run_without_profile_fails(self, monkeypatch):
+        monkeypatch.setattr(
+            "symeraseme.core.identity.load_profile",
+            lambda: (_ for _ in ()).throw(FileNotFoundError("no profile")),
+        )
+        plan_campaign(campaign_id="no-profile", max_brokers=1)
+        result = execute_campaign("no-profile", dry_run=True)
+        assert result["total_planned"] >= 1
+        email_results = [r for r in result["results"] if "to" in r]
+        if not email_results:
+            pytest.skip("No email requests in campaign")
+        r = email_results[0]
+        assert r["success"] is False
+        assert "init-profile" in r["error"]
+
+    def test_dry_run_missing_required_fields_fails(self, monkeypatch):
+        from symeraseme.registry.schema import IdentityProfile
+
+        profile = IdentityProfile(
+            full_name="",
+            email_addresses=[],
+        )
+        monkeypatch.setattr(
+            "symeraseme.core.identity.load_profile",
+            lambda: profile,
+        )
+        plan_campaign(campaign_id="missing-fields", max_brokers=1)
+        result = execute_campaign("missing-fields", dry_run=True)
+        assert result["total_planned"] >= 1
+        email_results = [r for r in result["results"] if "to" in r]
+        if not email_results:
+            pytest.skip("No email requests in campaign")
+        r = email_results[0]
+        assert r["success"] is False
+        assert "init-profile" in r["error"]
+
+    def test_execute_includes_identity_hash_in_event(self, _fake_profile, monkeypatch):
+        from symeraseme.core.events import get_events
+        from symeraseme.core.identity import hash_profile
+
+        profile = _fake_profile
+        expected_hash = hash_profile(profile)
+
+        monkeypatch.setattr(
+            "symeraseme.adapters.email.himalaya.send_email",
+            lambda **_: {"message_id": "<test@msg>"},
+        )
+
+        plan_campaign(campaign_id="hash-test", max_brokers=3)
+        requests = list_removal_requests(campaign_id="hash-test")
+        assert len(requests) > 0
+
+        email_requests = [r for r in requests if r.get("channel") == "email"]
+        if not email_requests:
+            pytest.skip("No email requests in campaign")
+
+        result = execute_request(email_requests[0]["id"])
+        assert result["success"] is True
+
+        events = get_events(email_requests[0]["id"])
+        sent_events = [e for e in events if e["event_type"] == "SENT"]
+        assert len(sent_events) == 1
+        assert sent_events[0]["payload_json"].get("identity_snapshot_hash") == expected_hash
+
+    def test_web_form_execution_dispatch(self, monkeypatch, tmp_path):
+        import os
+
+        os.environ["SYMERASEME_DB_DIR"] = str(tmp_path)
+        os.environ["SYMERASEME_DATA_DIR"] = str(tmp_path)
+
+        from symeraseme.core.db import close_connection, init_db
+
+        close_connection()
+        init_db(str(tmp_path / "test.db"))
+
+        plan_campaign(campaign_id="web-form-test", max_brokers=5)
+        requests = list_removal_requests(campaign_id="web-form-test")
+        web_form_requests = [r for r in requests if r.get("channel") == "web_form"]
+        if not web_form_requests:
+            pytest.skip("No web-form requests in campaign")
+
+        import asyncio
+
+        async def mock_run_form(**kwargs):
+            return type(
+                "Result",
+                (),
+                {
+                    "success": True,
+                    "step_index": 0,
+                    "total_steps": 1,
+                    "error": "",
+                    "screenshot_path": "",
+                    "dry_run": False,
+                },
+            )()
+
+        monkeypatch.setattr(
+            "symeraseme.services.web_form._run_form",
+            mock_run_form,
+        )
+        monkeypatch.setattr(
+            "symeraseme.services.web_form.profile_exists",
+            lambda: False,
+        )
+
+        result = execute_request(web_form_requests[0]["id"])
+        assert result["success"] is True
+
+
+class TestHandleExecuteRouting:
+    def test_routes_to_async_when_no_account(self, monkeypatch, tmp_path):
+        import os
+
+        from symeraseme.services.campaign import handle_execute
+
+        os.environ["SYMERASEME_DB_DIR"] = str(tmp_path)
+        os.environ["SYMERASEME_DATA_DIR"] = str(tmp_path)
+
+        from symeraseme.core.db import close_connection, init_db
+
+        close_connection()
+        init_db(str(tmp_path / "test.db"))
+
+        async_called = []
+
+        async def mock_execute_campaign_async(campaign_id, **kwargs):
+            async_called.append(True)
+            return {
+                "campaign_id": campaign_id,
+                "total_planned": 0,
+                "batch_size": 0,
+                "results": [],
+            }
+
+        monkeypatch.setattr(
+            "symeraseme.services.campaign.execute_campaign_async",
+            mock_execute_campaign_async,
+        )
+
+        handle_execute("test-campaign", yes=True)
+        assert len(async_called) == 1
+
+    def test_routes_to_sync_when_account_given(self, monkeypatch, tmp_path):
+        import os
+
+        from symeraseme.services.campaign import handle_execute
+
+        os.environ["SYMERASEME_DB_DIR"] = str(tmp_path)
+        os.environ["SYMERASEME_DATA_DIR"] = str(tmp_path)
+
+        from symeraseme.core.db import close_connection, init_db
+
+        close_connection()
+        init_db(str(tmp_path / "test.db"))
+
+        sync_called = []
+
+        def mock_execute_campaign(*args, **kwargs):
+            sync_called.append(True)
+            return {
+                "campaign_id": kwargs.get("campaign_id", "test"),
+                "total_planned": 0,
+                "batch_size": 0,
+                "results": [],
+            }
+
+        monkeypatch.setattr(
+            "symeraseme.services.campaign.execute_campaign",
+            mock_execute_campaign,
+        )
+
+        handle_execute("test-campaign", account="gmail", yes=True)
+        assert len(sync_called) == 1
+
+
+class TestBrokerIdIndex:
+    def test_load_broker_uses_index(self, monkeypatch):
+        from symeraseme.registry.loader import _BROKER_ID_INDEX, load_broker
+
+        mock_broker = type("Broker", (), {"id": "test-broker"})()
+        load_calls = []
+
+        def mock_load_yaml(path):
+            load_calls.append(str(path))
+            return mock_broker
+
+        monkeypatch.setattr(
+            "symeraseme.registry.loader.load_broker_yaml",
+            mock_load_yaml,
+        )
+
+        _BROKER_ID_INDEX.clear()
+        _BROKER_ID_INDEX["test-broker"] = "/fake/path.yaml"
+        result = load_broker("test-broker")
+        assert result == mock_broker
+        assert len(load_calls) == 1
+        assert load_calls[0] == "/fake/path.yaml"
 
 
 class TestConsent:

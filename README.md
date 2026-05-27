@@ -77,8 +77,8 @@ See `.env.example` for all supported environment variables.
 # Initialize your profile with personal details
 symeraseme init-profile
 
-# List all registered brokers, optionally filtered by jurisdiction
-symeraseme brokers list --jurisdiction GDPR
+# List all registered brokers, optionally filtered by jurisdiction or law
+symeraseme brokers list --law GDPR
 
 # Show details for a specific broker
 symeraseme brokers show --name spokeo
@@ -90,7 +90,7 @@ symeraseme brokers show --name spokeo
 $ symeraseme init-profile
 ✓ Profile saved to ~/.config/symeraseme/profile.json
 
-$ symeraseme brokers list --jurisdiction GDPR
+$ symeraseme brokers list --law GDPR
 ┏━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓
 ┃ Name         ┃ Website                     ┃ Jurisdiction  ┃
 ┡━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩
@@ -100,7 +100,7 @@ $ symeraseme brokers list --jurisdiction GDPR
 │ Schufa       │ https://www.schufa.de       │ GDPR          │
 └──────────────┴─────────────────────────────┴───────────────┘
 
-$ symeraseme plan create --campaign initial --jurisdiction GDPR --max 5
+$ symeraseme plan create --campaign initial --law GDPR --max 5
 ✓ Plan created: 5 brokers selected
   Campaign: initial
 

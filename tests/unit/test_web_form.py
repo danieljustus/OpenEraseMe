@@ -374,3 +374,106 @@ class TestLocalFixtureForm:
         assert "optout-form" in content
         assert "submit-btn" in content
         assert "success-message" in content
+
+
+class TestHandleRunWebForm:
+    def test_failure_creates_manual_task(self, monkeypatch, tmp_path):
+        import json
+        import os
+
+        from symeraseme.services.web_form import handle_run_web_form
+
+        os.environ["SYMERASEME_DB_DIR"] = str(tmp_path)
+        os.environ["SYMERASEME_DATA_DIR"] = str(tmp_path)
+
+        from symeraseme.core.db import close_connection, init_db
+
+        close_connection()
+        init_db(str(tmp_path / "test.db"))
+
+        mock_broker = type(
+            "Broker",
+            (),
+            {
+                "name": "Test Broker",
+                "id": "test-broker",
+                "opt_out": [
+                    type(
+                        "WebForm",
+                        (),
+                        {
+                            "type": "web_form",
+                            "url": "https://example.com/form",
+                            "form_spec": type(
+                                "FormSpec",
+                                (),
+                                {
+                                    "steps": [],
+                                    "timeout_seconds": 30.0,
+                                    "rate_limit_delay": 1.0,
+                                },
+                            )(),
+                        },
+                    )()
+                ],
+                "jurisdictions": ["GDPR"],
+            },
+        )()
+
+        monkeypatch.setattr(
+            "symeraseme.services.web_form.load_broker",
+            lambda _: mock_broker,
+        )
+
+        mock_result = type(
+            "Result",
+            (),
+            {
+                "success": False,
+                "step_index": 0,
+                "total_steps": 3,
+                "error": "Timeout error",
+                "screenshot_path": "/tmp/screenshot.png",
+                "dry_run": False,
+            },
+        )()
+
+        async def mock_run_form(**kwargs):
+            return mock_result
+
+        monkeypatch.setattr(
+            "symeraseme.services.web_form._run_form",
+            mock_run_form,
+        )
+
+        monkeypatch.setattr(
+            "symeraseme.services.web_form.profile_exists",
+            lambda: False,
+        )
+
+        result = handle_run_web_form(
+            "test-broker",
+            output_format="json",
+        )
+        data = json.loads(result)
+        assert data["success"] is False
+        assert data["task_id"] is not None
+        assert data["task_id"] > 0
+        task_id = data["task_id"]
+
+        from typer import Exit
+
+        with pytest.raises(Exit) as exc_info:
+            handle_run_web_form(
+                "test-broker",
+                output_format="text",
+            )
+        assert exc_info.value.exit_code == 1
+
+        from symeraseme.core.manual_fallback import get_manual_task
+
+        task = get_manual_task(task_id)
+        assert task is not None
+        assert task["broker_id"] == "test-broker"
+        assert task["broker_name"] == "Test Broker"
+        assert task["status"] == "pending"

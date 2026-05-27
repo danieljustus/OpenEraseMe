@@ -86,3 +86,34 @@ def handle_manual_tasks_complete(
         return json.dumps(result.__dict__, indent=2, default=str)
 
     return f"Manual task #{task_id} marked as completed."
+
+
+def handle_manual_tasks_cleanup(
+    dry_run: bool = False,
+    output_format: str = "text",
+) -> str:
+    """Remove old screenshot and HTML snapshot files from manual tasks directory."""
+    from pathlib import Path
+
+    from symeraseme.core.manual_fallback import MANUAL_TASKS_DIR
+
+    tasks_dir = Path(MANUAL_TASKS_DIR).expanduser()
+    if not tasks_dir.exists():
+        return "No manual tasks directory found — nothing to clean up."
+
+    removed = 0
+    skipped = 0
+    for path in tasks_dir.iterdir():
+        if path.is_file() and path.suffix in (".png", ".html", ".json"):
+            if dry_run:
+                skipped += 1
+            else:
+                path.unlink()
+                removed += 1
+
+    if output_format == "json":
+        return json.dumps({"removed": removed, "skipped": skipped, "dry_run": dry_run}, indent=2)
+
+    if dry_run:
+        return f"Would remove {skipped} artifact(s) from {tasks_dir}. Use --yes to confirm."
+    return f"Removed {removed} artifact(s) from {tasks_dir}."

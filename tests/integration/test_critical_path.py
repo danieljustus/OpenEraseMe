@@ -86,12 +86,24 @@ def fake_keyring():
 class TestPlanExecuteTickStatus:
     """Integration test for the complete lifecycle cycle."""
 
-    def test_plan_dry_run_cycle(self, clean_db):
+    def test_plan_dry_run_cycle(self, clean_db, monkeypatch, tmp_path):
         """Plan a campaign, dry-run execute, tick, verify status."""
         from symeraseme.core.orchestrator import plan_campaign
         from symeraseme.services.campaign import handle_execute
         from symeraseme.services.status import handle_status
         from symeraseme.services.tick import handle_tick
+
+        profile_path = tmp_path / "identity.enc"
+        monkeypatch.setenv("SYMERASEME_IDENTITY_PATH", str(profile_path))
+
+        import symeraseme.core.identity as vault
+
+        vault.save_profile(
+            IdentityProfile(
+                full_name="Test User",
+                email_addresses=["test@example.com"],
+            )
+        )
 
         result = plan_campaign(
             campaign_id="integration-test",

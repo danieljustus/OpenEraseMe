@@ -12,6 +12,7 @@ from symeraseme.core.events import (
     get_removal_request,
     list_removal_requests,
 )
+from symeraseme.core.identity import hash_profile, load_profile
 from symeraseme.core.projection import append_event_and_project, rebuild_all_states
 from symeraseme.registry.loader import load_all_brokers
 from symeraseme.registry.schema import Broker
@@ -23,6 +24,7 @@ def plan_campaign(
     *,
     campaign_id: str,
     jurisdiction: str | None = None,
+    law: str | None = None,
     priority: str | None = None,
     category: str | None = None,
     max_brokers: int = 30,
@@ -33,9 +35,16 @@ def plan_campaign(
 
     brokers = load_all_brokers(
         jurisdiction=jurisdiction,
+        law=law,
         priority=priority,
         category=category,
     )
+
+    try:
+        profile = load_profile()
+        identity_hash = hash_profile(profile)
+    except FileNotFoundError:
+        identity_hash = ""
 
     channels: list[tuple[Broker, dict[str, Any]]] = []
     for broker in brokers:
@@ -55,7 +64,7 @@ def plan_campaign(
             campaign_id=campaign_id,
             jurisdiction=_resolve_jurisdiction(broker, jurisdiction),
             template_id=template_id,
-            identity_snapshot_hash="",
+            identity_snapshot_hash=identity_hash,
         )
         append_event(
             request_id,
@@ -109,29 +118,94 @@ def execute_request(
     config_path: str | None = None,
     dry_run: bool = False,
 ) -> dict[str, Any]:
-    """Execute a single removal request by sending an email via the configured backend.
-
-    The default backend is SMTP (``SYMERASEME_EMAIL_BACKEND=smtp``).
-    Set ``SYMERASEME_EMAIL_BACKEND=himalaya`` to use the Himalaya CLI instead.
-    """
+    """Execute a single removal request by sending an email or running a web form."""
     req = get_removal_request(request_id)
     if req is None:
         return {"success": False, "error": f"Request {request_id} not found"}
-
-    from symeraseme.adapters.email.himalaya import EmailError, send_email
-    from symeraseme.core.templating import render_template
 
     broker_name = req["broker_id"]
     events = get_events(request_id)
     last_event = events[-1] if events else {}
     payload = last_event.get("payload_json", {})
 
+    channel_type = req.get("channel", "email")
+
+    if channel_type == "web_form":
+        from symeraseme.services.web_form import run_web_form_for_broker
+
+        result = run_web_form_for_broker(
+            broker_name,
+            dry_run=dry_run,
+        )
+        identity_hash = ""
+        try:
+            profile = load_profile()
+            identity_hash = hash_profile(profile)
+        except FileNotFoundError:
+            pass
+        if result["success"]:
+            append_event_and_project(
+                request_id,
+                "SENT",
+                payload={
+                    "broker_name": broker_name,
+                    "form_url": result.get("url", ""),
+                    "expected_response_days": 30,
+                    "identity_snapshot_hash": identity_hash,
+                },
+            )
+        else:
+            append_event_and_project(
+                request_id,
+                "SEND_FAILED",
+                payload={
+                    "error": result.get("error", ""),
+                    "broker_name": broker_name,
+                    "task_id": result.get("task_id"),
+                },
+            )
+        return {"success": result["success"], "request_id": request_id, **result}
+
+    from symeraseme.adapters.email.himalaya import EmailError, send_email
+    from symeraseme.core.templating import render_template
+
     channel_endpoint = payload.get("endpoint", "")
     template_id = req.get("template_id", "")
+    required_fields = payload.get("required_fields", ["full_name", "email_addresses"])
+
+    try:
+        profile = load_profile()
+        identity_hash = hash_profile(profile)
+    except FileNotFoundError:
+        return {
+            "success": False,
+            "error": (
+                "Identity profile not found. "
+                "Run 'symeraseme init-profile' first to create your identity profile."
+            ),
+            "request_id": request_id,
+        }
+
+    missing = []
+    profile_vars = profile.model_dump()
+    for field in required_fields:
+        value = profile_vars.get(field)
+        if value is None or value == [] or value == {} or value == "":
+            missing.append(field)
+    if missing:
+        return {
+            "success": False,
+            "error": (
+                f"Missing required identity fields: {', '.join(missing)}. "
+                f"Run 'symeraseme init-profile' to update your profile."
+            ),
+            "request_id": request_id,
+        }
 
     if dry_run:
         rendered = render_template(
             template_id,
+            profile=profile,
             broker_name=broker_name,
         )
         return {
@@ -146,6 +220,7 @@ def execute_request(
     try:
         rendered = render_template(
             template_id,
+            profile=profile,
             broker_name=broker_name,
         )
         send_result = send_email(
@@ -164,6 +239,7 @@ def execute_request(
                 "account": account or "",
                 "expected_response_days": payload.get("expected_response_days", 30),
                 "message_id": send_result.get("message_id", ""),
+                "identity_snapshot_hash": identity_hash,
             },
         )
         return {"success": True, "request_id": request_id, "result": send_result}
@@ -344,7 +420,7 @@ async def execute_campaign_async(
 
 
 def _select_channel(broker: Broker) -> dict[str, Any] | None:
-    from symeraseme.registry.schema import EmailOptOut
+    from symeraseme.registry.schema import EmailOptOut, WebFormOptOut
 
     for channel in broker.opt_out:
         if isinstance(channel, EmailOptOut):
@@ -354,6 +430,14 @@ def _select_channel(broker: Broker) -> dict[str, Any] | None:
                 "template": channel.template,
                 "locale": getattr(channel, "locale", ""),
                 "expected_response_days": channel.expected_response_days,
+                "required_fields": channel.required_fields,
+            }
+        if isinstance(channel, WebFormOptOut):
+            return {
+                "type": "web_form",
+                "endpoint": channel.url,
+                "form_spec": channel.form_spec,
+                "expected_response_days": 30,
             }
     return None
 
