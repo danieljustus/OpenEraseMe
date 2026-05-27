@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Generator
 from contextlib import contextmanager
 from enum import StrEnum
-from typing import Any
+from typing import Any, NoReturn
 
 import typer
 from rich.console import Console as _RichConsole
@@ -140,7 +140,7 @@ def render_result(
         raise typer.Exit(1)
 
 
-def render_error(message: str) -> None:
+def render_error(message: str) -> NoReturn:
     """Print an error message and exit."""
     print_error(message)
     raise typer.Exit(1)
