@@ -96,7 +96,8 @@ def _broker_cache_key(registry_dir: Path) -> tuple[str, str]:
     parts: list[str] = []
     for yml in yaml_files:
         st = yml.stat()
-        parts.append(f"{yml.name}:{st.st_mtime}:{st.st_size}")
+        rel = yml.relative_to(registry_dir).as_posix()
+        parts.append(f"{rel}:{st.st_mtime}:{st.st_size}")
     digest = hashlib.sha256("|".join(parts).encode()).hexdigest()
     return (str(registry_dir), digest)
 
@@ -194,6 +195,22 @@ def load_all_brokers(
                 skipped += 1
                 continue
             brokers.append(broker)
+        # Opportunistically cache the full load so subsequent calls
+        # (filtered or unfiltered) can use the warm cache.
+        all_brokers: list[Broker] = []
+        all_skipped = 0
+        for yml in yaml_files:
+            if yml.name.startswith("_"):
+                continue
+            try:
+                broker = load_broker_yaml(yml)
+            except (yaml.YAMLError, jsonschema.ValidationError, ValidationError) as exc:
+                logger.warning("skipped broker %s: %s", yml, exc)
+                all_skipped += 1
+                continue
+            all_brokers.append(broker)
+        _BROKER_CACHE[cache_key] = all_brokers
+        _SKIPPED_COUNT[cache_key] = all_skipped
         return brokers
 
     # Cold cache, no filters: load everything and cache it.

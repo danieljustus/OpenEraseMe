@@ -390,13 +390,12 @@ def send_message_smtp(
     )
 
     try:
-        smtp = smtplib.SMTP(smtp_config.host, smtp_config.port, timeout=30)
-        if smtp_config.use_tls:
-            smtp.starttls()
-        if smtp_config.username and smtp_config.password:
-            smtp.login(smtp_config.username, smtp_config.password)
-        smtp.sendmail(from_addr, recipients, mime_text)
-        smtp.quit()
+        with smtplib.SMTP(smtp_config.host, smtp_config.port, timeout=30) as smtp:
+            if smtp_config.use_tls:
+                smtp.starttls()
+            if smtp_config.username and smtp_config.password:
+                smtp.login(smtp_config.username, smtp_config.password)
+            smtp.sendmail(from_addr, recipients, mime_text)
     except smtplib.SMTPException as e:
         raise SmtpError(str(e)) from e
     except OSError as e:

@@ -76,9 +76,9 @@ app = typer.Typer(
     epilog=(
         "Quick Start:\n"
         "  1. symeraseme init-profile                       Create your identity profile\n"
-        "  2. symeraseme brokers list --jurisdiction GDPR    Browse the broker registry\n"
+        "  2. symeraseme brokers list --jurisdiction EU      Browse the broker registry\n"
         "  3. symeraseme plan create --campaign initial \\\n"
-        "     --jurisdiction GDPR --max 10                   Plan a removal campaign\n"
+        "     --jurisdiction EU --max 10                     Plan a removal campaign\n"
         "  4. symeraseme execute --campaign initial \\\n"
         "     --batch-size 5 --yes                           Send opt-out requests\n"
         "  5. symeraseme tick                                Process deadlines & reminders\n"
