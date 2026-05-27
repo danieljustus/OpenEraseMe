@@ -308,6 +308,30 @@ class TestHandleExecuteRouting:
         assert len(sync_called) == 1
 
 
+class TestBrokerIdIndex:
+    def test_load_broker_uses_index(self, monkeypatch):
+        from symeraseme.registry.loader import _BROKER_ID_INDEX, load_broker
+
+        mock_broker = type("Broker", (), {"id": "test-broker"})()
+        load_calls = []
+
+        def mock_load_yaml(path):
+            load_calls.append(str(path))
+            return mock_broker
+
+        monkeypatch.setattr(
+            "symeraseme.registry.loader.load_broker_yaml",
+            mock_load_yaml,
+        )
+
+        _BROKER_ID_INDEX.clear()
+        _BROKER_ID_INDEX["test-broker"] = "/fake/path.yaml"
+        result = load_broker("test-broker")
+        assert result == mock_broker
+        assert len(load_calls) == 1
+        assert load_calls[0] == "/fake/path.yaml"
+
+
 class TestConsent:
     def test_issue_and_verify(self):
         token = issue_token("execute")

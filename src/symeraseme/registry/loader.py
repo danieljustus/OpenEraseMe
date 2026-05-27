@@ -74,32 +74,39 @@ def load_broker_yaml(path: str | Path) -> Broker:
 
 
 def load_broker(broker_id: str) -> Broker:
-    for b in load_all_brokers():
-        if b.id == broker_id:
-            return b
+    global _BROKER_ID_INDEX
+    registry_dir = _registry_dir() / "brokers"
+    if broker_id in _BROKER_ID_INDEX:
+        return load_broker_yaml(_BROKER_ID_INDEX[broker_id])
+    _BROKER_ID_INDEX = _build_broker_id_index(registry_dir)
+    if broker_id in _BROKER_ID_INDEX:
+        return load_broker_yaml(_BROKER_ID_INDEX[broker_id])
     msg = f"Broker '{broker_id}' not found in registry"
     raise FileNotFoundError(msg)
 
 
 _BROKER_CACHE: dict[tuple[str, str], list[Broker]] = {}
 _SKIPPED_COUNT: dict[tuple[str, str], int] = {}
+_BROKER_ID_INDEX: dict[str, Path] = {}
 
 
 def _broker_cache_key(registry_dir: Path) -> tuple[str, str]:
-    """Content-hash-based cache key derived from all YAML file mtimes.
-
-    Hashes sorted (relative_path, mtime, size) tuples so the global
-    cache invalidates when any YAML file is added, removed, renamed,
-    or has its content changed (mtime update).
-    """
-    yaml_files = sorted(registry_dir.rglob("*.yaml"))
-    parts: list[str] = []
-    for yml in yaml_files:
-        st = yml.stat()
-        rel = yml.relative_to(registry_dir).as_posix()
-        parts.append(f"{rel}:{st.st_mtime}:{st.st_size}")
-    digest = hashlib.sha256("|".join(parts).encode()).hexdigest()
+    dir_stat = registry_dir.stat()
+    yaml_count = sum(1 for _ in registry_dir.rglob("*.yaml"))
+    key_data = f"{registry_dir}:{dir_stat.st_mtime}:{yaml_count}"
+    digest = hashlib.sha256(key_data.encode()).hexdigest()
     return (str(registry_dir), digest)
+
+
+def _build_broker_id_index(registry_dir: Path) -> dict[str, Path]:
+    index: dict[str, Path] = {}
+    for yml in registry_dir.rglob("*.yaml"):
+        if yml.name.startswith("_"):
+            continue
+        meta = _quick_parse_meta(yml)
+        if meta is not None and "id" in meta:
+            index[meta["id"]] = yml
+    return index
 
 
 def _quick_parse_meta(yml_path: Path) -> dict | None:
@@ -203,9 +210,9 @@ def load_all_brokers(
             brokers.append(broker)
         return brokers
 
-    # Cold cache, no filters: load everything and cache it.
     brokers = []
     skipped = 0
+    id_index: dict[str, Path] = {}
     for yml in yaml_files:
         if yml.name.startswith("_"):
             continue
@@ -216,6 +223,9 @@ def load_all_brokers(
             skipped += 1
             continue
         brokers.append(broker)
+        id_index[broker.id] = yml
+    global _BROKER_ID_INDEX
+    _BROKER_ID_INDEX = id_index
     _BROKER_CACHE[cache_key] = brokers
     _SKIPPED_COUNT[cache_key] = skipped
     return _filter_brokers(
