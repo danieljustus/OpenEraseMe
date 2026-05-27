@@ -490,27 +490,4 @@ def submit_inbox_reply(
     conn.commit()
     reply_id = cur.lastrowid
 
-    if request_id and classified_as:
-        event_type = _classification_event_type(classified_as)
-        append_event_and_project(
-            request_id,
-            event_type,
-            payload={"subject": subject, "from": from_addr},
-            source="inbox",
-        )
-
     return {"reply_id": reply_id, "request_id": request_id, "classified_as": classified_as}
-
-
-def _classification_event_type(classified_as: str) -> str:
-    mapping: dict[str, str] = {
-        "ack": "ACK",
-        "verification": "VERIFICATION_REQUESTED",
-        "confirmed": "CONFIRMED",
-        "rejected": "REJECTED_FINAL",
-        "human_required": "HUMAN_ACTION_REQUIRED",
-        "autoresponder": "AUTORESPONDER",
-        "bounce": "BOUNCE",
-        "noise": "NOTE_ADDED",
-    }
-    return mapping.get(classified_as, "NOTE_ADDED")

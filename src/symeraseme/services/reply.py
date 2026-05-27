@@ -5,7 +5,6 @@ import json
 from symeraseme.adapters.triage.classifier import ReplyClassifier
 from symeraseme.adapters.triage.responder import generate_rebuttal
 from symeraseme.adapters.triage.scrubber import grant_llm_consent, llm_consent_granted
-from symeraseme.cli.console import render_error
 from symeraseme.core.db import get_connection, init_db
 from symeraseme.core.events import get_events, get_removal_request
 from symeraseme.core.identity import load_profile, profile_exists
@@ -21,6 +20,8 @@ def _ensure_llm_consent(yes: bool = False) -> None:
         grant_llm_consent()
         return
     import typer
+
+    from symeraseme.cli.console import render_error
 
     typer.echo(
         "WARNING: LLM operations may send PII (email addresses, phone numbers, names) "
@@ -42,6 +43,8 @@ def handle_classify_reply(
     output_format: str = "text",
     yes: bool = False,
 ) -> str:
+    from symeraseme.cli.console import render_error
+
     _ensure_llm_consent(yes=yes)
     init_db()
 
@@ -173,6 +176,8 @@ def handle_generate_rebuttal(
     output_format: str = "text",
     yes: bool = False,
 ) -> str:
+    from symeraseme.cli.console import render_error
+
     _ensure_llm_consent(yes=yes)
     init_db()
 
