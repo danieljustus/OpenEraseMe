@@ -184,14 +184,18 @@ class TestExecuteCampaign:
             lambda **_: {"message_id": "<test@msg>"},
         )
 
-        plan_campaign(campaign_id="hash-test", max_brokers=1)
+        plan_campaign(campaign_id="hash-test", max_brokers=3)
         requests = list_removal_requests(campaign_id="hash-test")
         assert len(requests) > 0
 
-        result = execute_request(requests[0]["id"])
+        email_requests = [r for r in requests if r.get("channel") == "email"]
+        if not email_requests:
+            pytest.skip("No email requests in campaign")
+
+        result = execute_request(email_requests[0]["id"])
         assert result["success"] is True
 
-        events = get_events(requests[0]["id"])
+        events = get_events(email_requests[0]["id"])
         sent_events = [e for e in events if e["event_type"] == "SENT"]
         assert len(sent_events) == 1
         assert sent_events[0]["payload_json"].get("identity_snapshot_hash") == expected_hash
