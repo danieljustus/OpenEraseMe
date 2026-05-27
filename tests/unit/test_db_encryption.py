@@ -13,6 +13,7 @@ from symeraseme.core.db import (
     _DB_TEMP,
     _ENC_HEADER,
     _cleanup_temp_files,
+    _get_secure_temp_dir,
     close_connection,
     connection_context,
     get_connection,
@@ -87,10 +88,10 @@ class TestTempFilePermissions:
 
         close_connection()
 
-    def test_temp_file_in_user_data_dir(
+    def test_temp_file_in_secure_temp_dir(
         self, encrypted_db_file: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Temp files must be in user data dir, not system /tmp."""
+        """Temp files must be in the tmpfs-backed secure temp dir."""
         monkeypatch.setenv("SYMERASEME_ENCRYPT_DB", "1")
         monkeypatch.setattr("symeraseme.core.db._get_db_fernet_key", lambda: _TEST_FERNET_KEY)
 
@@ -98,11 +99,9 @@ class TestTempFilePermissions:
         assert len(_DB_TEMP) == 1
         tmp_path = list(_DB_TEMP.values())[0]
 
-        # Should be in user data dir, not /tmp
-        assert "tmp" not in str(tmp_path).lower() or str(tmp_path.parent) == str(
-            encrypted_db_file.parent
-        )
-        assert tmp_path.parent == encrypted_db_file.parent
+        secure_dir = _get_secure_temp_dir()
+        assert tmp_path.parent == secure_dir
+        assert tmp_path.name.startswith("symeraseme_decrypted_")
 
         close_connection()
 
