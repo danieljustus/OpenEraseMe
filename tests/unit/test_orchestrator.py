@@ -117,7 +117,7 @@ class TestExecuteCampaign:
         r = result["results"][0]
         assert r["success"] is True
         assert r.get("dry_run") is True
-        if "body" in r:
+        if "to" in r:
             assert "Jane Doe" in r["body"]
             assert "jane@example.com" in r["body"]
         else:
@@ -144,7 +144,7 @@ class TestExecuteCampaign:
         plan_campaign(campaign_id="no-profile", max_brokers=1)
         result = execute_campaign("no-profile", dry_run=True)
         assert result["total_planned"] >= 1
-        email_results = [r for r in result["results"] if "body" in r]
+        email_results = [r for r in result["results"] if "to" in r]
         if not email_results:
             pytest.skip("No email requests in campaign")
         r = email_results[0]
@@ -165,7 +165,7 @@ class TestExecuteCampaign:
         plan_campaign(campaign_id="missing-fields", max_brokers=1)
         result = execute_campaign("missing-fields", dry_run=True)
         assert result["total_planned"] >= 1
-        email_results = [r for r in result["results"] if "body" in r]
+        email_results = [r for r in result["results"] if "to" in r]
         if not email_results:
             pytest.skip("No email requests in campaign")
         r = email_results[0]
@@ -268,7 +268,7 @@ class TestHandleExecuteRouting:
             }
 
         monkeypatch.setattr(
-            "symeraseme.core.orchestrator.execute_campaign_async",
+            "symeraseme.services.campaign.execute_campaign_async",
             mock_execute_campaign_async,
         )
 

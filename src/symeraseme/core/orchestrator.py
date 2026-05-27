@@ -168,7 +168,6 @@ def execute_request(
 
     from symeraseme.adapters.email.himalaya import EmailError, send_email
     from symeraseme.core.templating import render_template
-    from symeraseme.registry.schema import IdentityProfile
 
     channel_endpoint = payload.get("endpoint", "")
     template_id = req.get("template_id", "")

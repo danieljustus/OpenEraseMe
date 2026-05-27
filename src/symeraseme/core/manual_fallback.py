@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Any
 
 from symeraseme.core.db import get_connection
+from symeraseme.registry.schema import IdentityProfile
 
 logger = logging.getLogger(__name__)
 

@@ -2,11 +2,17 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 
 from symeraseme.core.consent import check_consent
 from symeraseme.core.db import init_db
-from symeraseme.core.orchestrator import execute_campaign, get_plan, plan_campaign
+from symeraseme.core.orchestrator import (
+    execute_campaign,
+    execute_campaign_async,
+    get_plan,
+    plan_campaign,
+)
 
 
 def handle_plan_create(
@@ -83,9 +89,6 @@ def handle_execute(
             dry_run=dry_run,
         )
     else:
-        import asyncio
-        from symeraseme.core.orchestrator import execute_campaign_async
-
         result = asyncio.run(
             execute_campaign_async(
                 campaign_id,

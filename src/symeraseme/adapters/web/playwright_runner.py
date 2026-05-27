@@ -242,7 +242,8 @@ async def _save_screenshot(page: Any, directory: Path, name: str) -> Path:
     filename = f"{timestamp}_{safe_name}.png"
     path = directory / filename
     await page.screenshot(path=str(path), full_page=True)
-    os.chmod(path, 0o600)
+    if path.exists():
+        os.chmod(path, 0o600)
     return path
 
 

@@ -253,7 +253,7 @@ def _filter_brokers(
             continue
         if jurisdiction and jurisdiction not in broker.jurisdictions:
             continue
-        if law and law not in [l.value for l in broker.laws]:
+        if law and law not in [law_item.value for law_item in broker.laws]:
             continue
         if priority and broker.priority.value != priority:
             continue

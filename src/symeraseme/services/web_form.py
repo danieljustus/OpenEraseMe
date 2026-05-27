@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
-from typing import cast
+from typing import Any, cast
 
 import typer
 
@@ -59,6 +59,14 @@ def run_web_form_for_broker(
             identity_fields[f"address_country_{i}"] = addr.country
 
     if dry_run:
+        body = json.dumps(
+            {
+                "url": url,
+                "steps": steps_data,
+                "identity_fields": identity_fields,
+            },
+            indent=2,
+        )
         return {
             "success": True,
             "dry_run": True,
@@ -67,6 +75,7 @@ def run_web_form_for_broker(
             "url": url,
             "steps": steps_data,
             "identity_fields": identity_fields,
+            "body": body,
         }
 
     try:
