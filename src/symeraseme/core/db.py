@@ -3,6 +3,11 @@
 When ``SYMERASEME_ENCRYPT_DB=1`` is set (or the database file is already
 encrypted), the file is transparently encrypted at rest using AES-256-GCM
 (Fernet) with a key derived from the identity master key in the system keyring.
+
+The decrypted temp file is placed in a tmpfs-backed directory so that no
+plaintext data remains on persistent storage after SIGKILL, OOM kill, or
+system crash. A startup scavenger cleans up any stale temp files from
+previous aborted runs.
 """
 
 from __future__ import annotations
@@ -11,12 +16,14 @@ import atexit
 import hashlib
 import logging
 import os
+import platform
 import signal
 import sqlite3
 import tempfile
 import threading
+import time
 from base64 import urlsafe_b64encode
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from pathlib import Path
 
 from cryptography.fernet import Fernet
@@ -29,8 +36,34 @@ DEFAULT_DB_NAME = "symeraseme.db"
 _ENC_HEADER = b"SYMERASEME_ENCv1\n"
 
 _DB_TEMP: dict[Path, Path] = {}
+_STALE_SCAVENGE_AGE = 86400
 
 _local = threading.local()
+
+
+def _get_secure_temp_dir() -> Path:
+    if platform.system() == "Linux" and Path("/dev/shm").exists():
+        secure_dir = Path("/dev/shm") / "symeraseme-db"
+    else:
+        secure_dir = Path(tempfile.gettempdir()) / "symeraseme-db"
+    secure_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
+    return secure_dir
+
+
+def _scavenge_stale_temp_dbs() -> None:
+    secure_dir = _get_secure_temp_dir()
+    if not secure_dir.exists():
+        return
+    now = time.time()
+    for entry in secure_dir.iterdir():
+        if entry.name.startswith("symeraseme_decrypted_") and entry.is_file():
+            age = now - entry.stat().st_mtime
+            if age > _STALE_SCAVENGE_AGE:
+                with suppress(OSError):
+                    entry.unlink(missing_ok=True)
+
+
+_scavenge_stale_temp_dbs()
 
 
 def _db_encryption_enabled() -> bool:
@@ -75,11 +108,10 @@ def _decrypt_to_temp(path: Path) -> Path:
     f = Fernet(fernet_key)
     decrypted = f.decrypt(encrypted_data)
 
-    # Use the user's data directory instead of /tmp to reduce exposure
-    # on shared systems if SIGKILL leaves the temp file behind.
-    temp_dir = _db_path(str(path)).parent
-    temp_dir.mkdir(parents=True, exist_ok=True)
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".db", dir=temp_dir) as tmp:
+    secure_dir = _get_secure_temp_dir()
+    with tempfile.NamedTemporaryFile(
+        delete=False, suffix=".db", prefix="symeraseme_decrypted_", dir=secure_dir
+    ) as tmp:
         tmp.write(decrypted)
         tmp_path = Path(tmp.name)
     os.chmod(tmp_path, 0o600)

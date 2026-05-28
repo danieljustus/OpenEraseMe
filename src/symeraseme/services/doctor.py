@@ -26,7 +26,6 @@ def _check_dependencies() -> tuple[bool, str]:
         "cryptography",
         "jinja2",
         "jsonschema",
-        "structlog",
     ]
     missing = []
     for pkg in required:

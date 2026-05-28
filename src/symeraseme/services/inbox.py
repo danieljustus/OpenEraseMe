@@ -9,8 +9,9 @@ from symeraseme.adapters.email.smtp_imap import (
 from symeraseme.adapters.email.smtp_imap import (
     poll_inbox as _poll,
 )
+from symeraseme.cli.console import render_error
 from symeraseme.core.db import init_db
-from symeraseme.core.events import get_events, list_removal_requests
+from symeraseme.core.events import get_events_for_requests, list_removal_requests
 from symeraseme.core.orchestrator import submit_inbox_reply
 
 
@@ -36,28 +37,28 @@ def handle_poll_inbox(
             since_days=since_days,
         )
     except IMAPError as e:
-        import typer
-
-        typer.echo(
+        render_error(
             f"IMAP error: {e}. "
-            "Check your credentials, ensure IMAP is enabled, and use an app password if 2FA is on.",
-            err=True,
+            "Check your credentials, ensure IMAP is enabled, and use an app password if 2FA is on."
         )
-        raise typer.Exit(1) from e
 
     if messages:
         requests = list_removal_requests(campaign_id=campaign_id)
         thread_map: dict[str, int] = {}
+        req_ids = []
         for req in requests:
             req_id = req.get("id") or req.get("request_id")
-            if not req_id:
-                continue
-            for ev in get_events(req_id):
-                if ev.get("event_type") == "SENT":
-                    payload = ev.get("payload_json", {})
-                    msg_id = payload.get("message_id", "")
-                    if msg_id:
-                        thread_map[msg_id] = req_id
+            if req_id:
+                req_ids.append(req_id)
+        if req_ids:
+            events_by_rid = get_events_for_requests(req_ids)
+            for rid, evs in events_by_rid.items():
+                for ev in evs:
+                    if ev.get("event_type") == "SENT":
+                        payload = ev.get("payload_json", {})
+                        msg_id = payload.get("message_id", "") if isinstance(payload, dict) else ""
+                        if msg_id:
+                            thread_map[msg_id] = rid
 
         matched = match_reply_to_request(messages, requests, thread_map)
         for msg in matched:

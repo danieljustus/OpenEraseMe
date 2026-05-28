@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Generator
+from contextlib import contextmanager
 from enum import StrEnum
-from typing import Any
+from typing import Any, NoReturn
 
 import typer
 from rich.console import Console as _RichConsole
@@ -15,6 +17,7 @@ from rich.text import Text
 from symeraseme.cli.types import CliResult
 
 console = _RichConsole()
+_error_console = _RichConsole(stderr=True)
 
 
 def print_success(message: str) -> None:
@@ -24,7 +27,7 @@ def print_success(message: str) -> None:
 
 def print_error(message: str) -> None:
     """Print an error message in red to stderr."""
-    console.print(f"[red]✗[/red] {message}", style="red")
+    _error_console.print(f"[red]✗[/red] {message}", style="red")
 
 
 def print_info(message: str) -> None:
@@ -67,6 +70,28 @@ def spinner_progress(description: str = "Working...") -> Progress:
     )
     progress.add_task(description=description, total=None)
     return progress
+
+
+@contextmanager
+def show_spinner(description: str = "Working...") -> Generator[Progress, None, None]:
+    """Show a transient spinner during a long-running operation.
+
+    Usage::
+
+        with show_spinner("Processing..."):
+            result = long_running_operation()
+
+    The spinner is hidden automatically when the block exits.
+    """
+    progress = Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        transient=True,
+        console=_error_console,
+    )
+    with progress:
+        progress.add_task(description=description, total=None)
+        yield progress
 
 
 class OutputFormat(StrEnum):
@@ -115,7 +140,7 @@ def render_result(
         raise typer.Exit(1)
 
 
-def render_error(message: str) -> None:
+def render_error(message: str) -> NoReturn:
     """Print an error message and exit."""
     print_error(message)
     raise typer.Exit(1)

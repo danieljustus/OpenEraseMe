@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 import typer
 
 from symeraseme.cli.commands.account_commands import (
@@ -78,7 +80,15 @@ app.add_typer(registry_app, rich_help_panel="Maintenance")
 
 
 @app.callback()
-def main(ctx: typer.Context, output: OutputFormat = OutputFormat.text) -> None:
+def main(
+    ctx: typer.Context,
+    output: OutputFormat = OutputFormat.text,
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Enable debug-level logging"),
+) -> None:
+    logging.basicConfig(
+        level=logging.DEBUG if verbose else logging.WARNING,
+        format="%(levelname)s:%(name)s:%(message)s",
+    )
     ctx.ensure_object(dict)
     ctx.obj["output"] = output
 
