@@ -118,6 +118,7 @@ def execute_request(
     account: str | None = None,
     config_path: str | None = None,
     dry_run: bool = False,
+    web_form_runner: "WebFormRunner | None" = None,
 ) -> dict[str, Any]:
     """Execute a single removal request by sending an email or running a web form."""
     req = get_removal_request(request_id)
@@ -132,9 +133,12 @@ def execute_request(
     channel_type = req.get("channel", "email")
 
     if channel_type == "web_form":
-        from symeraseme.services.web_form import run_web_form_for_broker
+        if web_form_runner is None:
+            from symeraseme.services.web_form import run_web_form_for_broker
 
-        result = run_web_form_for_broker(
+            web_form_runner = run_web_form_for_broker
+
+        result = web_form_runner(
             broker_name,
             dry_run=dry_run,
         )
@@ -260,6 +264,7 @@ def execute_campaign(
     config_path: str | None = None,
     batch_size: int = 5,
     dry_run: bool = False,
+    web_form_runner: "WebFormRunner | None" = None,
 ) -> dict[str, Any]:
     requests = list_removal_requests(campaign_id=campaign_id, status="PLANNED")
     batch = requests[:batch_size]
@@ -271,6 +276,7 @@ def execute_campaign(
             account=account,
             config_path=config_path,
             dry_run=dry_run,
+            web_form_runner=web_form_runner,
         )
         results.append(result)
 
@@ -288,6 +294,7 @@ async def execute_campaign_async(
     batch_size: int = _BATCH_LIMIT,
     dry_run: bool = False,
     smtp_skip_tls: bool = False,
+    web_form_runner: "WebFormRunner | None" = None,
 ) -> dict[str, Any]:
     """Execute a campaign using direct SMTP for batched sending.
 
@@ -326,7 +333,7 @@ async def execute_campaign_async(
     if dry_run:
         results: list[dict[str, Any]] = []
         for req in batch:
-            r = execute_request(req["id"], dry_run=True)
+            r = execute_request(req["id"], dry_run=True, web_form_runner=web_form_runner)
             results.append(r)
         return {
             "campaign_id": campaign_id,
