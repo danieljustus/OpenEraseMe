@@ -292,6 +292,8 @@ def init_db(path: str | None = None) -> Path:
             reminders_sent  INTEGER NOT NULL DEFAULT 0,
             escalation_level INTEGER NOT NULL DEFAULT 0
         );
+        CREATE INDEX IF NOT EXISTS idx_request_state_next_action
+            ON request_state(next_action_at, current_status);
 
         CREATE TABLE IF NOT EXISTS inbox_replies (
             id              INTEGER PRIMARY KEY AUTOINCREMENT,
