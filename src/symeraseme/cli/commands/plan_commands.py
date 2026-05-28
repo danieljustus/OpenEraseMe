@@ -103,6 +103,11 @@ def execute(
         "--consent",
         help="Pre-issued consent token",
     ),
+    backend: str = typer.Option(
+        None,
+        "--backend",
+        help="Execution backend: smtp (batch) or himalaya (CLI)",
+    ),
 ) -> None:
     """Send removal requests for a campaign.
 
@@ -121,6 +126,7 @@ def execute(
             yes,
             consent_token,
             ctx.obj["output"],
+            backend=backend,
         )
     render_result(ctx.obj["output"], result)
 
