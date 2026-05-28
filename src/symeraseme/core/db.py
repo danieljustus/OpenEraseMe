@@ -16,8 +16,8 @@ import atexit
 import hashlib
 import logging
 import os
-import secrets
 import platform
+import secrets
 import signal
 import sqlite3
 import tempfile
