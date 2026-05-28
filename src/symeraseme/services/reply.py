@@ -70,6 +70,7 @@ def handle_classify_reply(
     try:
         broker = load_broker(broker_id)
     except Exception:
+        logger.warning("Failed to load broker %s", broker_id)
         broker = None
 
     broker_name = broker.name if broker else broker_id
@@ -203,6 +204,7 @@ def handle_generate_rebuttal(
     try:
         broker = load_broker(broker_id)
     except Exception:
+        logger.warning("Failed to load broker %s", broker_id)
         broker = None
 
     broker_name = broker.name if broker else broker_id
