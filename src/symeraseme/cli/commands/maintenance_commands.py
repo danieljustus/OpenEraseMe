@@ -5,8 +5,8 @@ from __future__ import annotations
 import typer
 
 from symeraseme.cli.console import console, print_success, render_error, render_result
-from symeraseme.registry.sync import handle_registry_sync
 from symeraseme.core.db import init_db
+from symeraseme.registry.sync import handle_registry_sync
 from symeraseme.services.export import handle_export
 from symeraseme.services.scheduler import (
     handle_generate_scheduler,

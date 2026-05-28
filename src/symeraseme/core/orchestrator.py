@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from symeraseme.core.protocols import WebFormRunner
 
 from symeraseme.core.events import (
     append_event,
@@ -118,7 +121,7 @@ def execute_request(
     account: str | None = None,
     config_path: str | None = None,
     dry_run: bool = False,
-    web_form_runner: "WebFormRunner | None" = None,
+    web_form_runner: WebFormRunner | None = None,
 ) -> dict[str, Any]:
     """Execute a single removal request by sending an email or running a web form."""
     req = get_removal_request(request_id)
@@ -264,7 +267,7 @@ def execute_campaign(
     config_path: str | None = None,
     batch_size: int = 5,
     dry_run: bool = False,
-    web_form_runner: "WebFormRunner | None" = None,
+    web_form_runner: WebFormRunner | None = None,
 ) -> dict[str, Any]:
     requests = list_removal_requests(campaign_id=campaign_id, status="PLANNED")
     batch = requests[:batch_size]
@@ -294,7 +297,7 @@ async def execute_campaign_async(
     batch_size: int = _BATCH_LIMIT,
     dry_run: bool = False,
     smtp_skip_tls: bool = False,
-    web_form_runner: "WebFormRunner | None" = None,
+    web_form_runner: WebFormRunner | None = None,
 ) -> dict[str, Any]:
     """Execute a campaign using direct SMTP for batched sending.
 

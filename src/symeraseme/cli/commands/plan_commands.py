@@ -207,7 +207,9 @@ def status(
         scope = f"campaign={campaign}" if campaign else "all campaigns"
         lines = [
             f"Status ({scope}) as of {summary['as_of']}",
-            f"  Total: {summary['totals']['requests']}   Resolved: {summary['totals']['resolved']}   Open: {summary['totals']['open']}",
+            f"  Total: {summary['totals']['requests']}   "
+            f"Resolved: {summary['totals']['resolved']}   "
+            f"Open: {summary['totals']['open']}",
         ]
         if summary["by_status"]:
             lines.append("  By status:")
