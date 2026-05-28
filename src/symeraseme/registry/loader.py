@@ -92,8 +92,7 @@ _BROKER_ID_INDEX: dict[str, Path] = {}
 
 def _broker_cache_key(registry_dir: Path) -> tuple[str, str]:
     dir_stat = registry_dir.stat()
-    yaml_count = sum(1 for _ in registry_dir.rglob("*.yaml"))
-    key_data = f"{registry_dir}:{dir_stat.st_mtime}:{yaml_count}"
+    key_data = f"{registry_dir}:{dir_stat.st_mtime}:{dir_stat.st_size}"
     digest = hashlib.sha256(key_data.encode()).hexdigest()
     return (str(registry_dir), digest)
 
