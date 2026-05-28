@@ -5,8 +5,8 @@ from __future__ import annotations
 import typer
 
 from symeraseme.cli.console import console, print_success, render_error, render_result
+from symeraseme.core.db import init_db
 from symeraseme.registry.sync import handle_registry_sync
-from symeraseme.services.db import handle_db_init
 from symeraseme.services.export import handle_export
 from symeraseme.services.scheduler import (
     handle_generate_scheduler,
@@ -29,8 +29,8 @@ registry_app = typer.Typer(
 
 
 def db_init() -> None:
-    result = handle_db_init()
-    print_success(result)
+    path = init_db()
+    print_success(f"Database initialized at {path}")
 
 
 def generate_scheduler_cmd(

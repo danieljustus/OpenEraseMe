@@ -69,6 +69,7 @@ def handle_execute(
     yes: bool = False,
     consent_token: str | None = None,
     output_format: str = "text",
+    web_form_runner=None,
 ) -> str:
     if not dry_run and not check_consent("execute", yes=yes, consent_token=consent_token):
         render_error(
@@ -83,6 +84,7 @@ def handle_execute(
             account=account,
             batch_size=batch_size,
             dry_run=dry_run,
+            web_form_runner=web_form_runner,
         )
     else:
         result = asyncio.run(
@@ -90,6 +92,7 @@ def handle_execute(
                 campaign_id,
                 batch_size=batch_size,
                 dry_run=dry_run,
+                web_form_runner=web_form_runner,
             )
         )
 

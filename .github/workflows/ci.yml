@@ -28,6 +28,13 @@ jobs:
         run: uv run ruff format --check src/symeraseme/
       - name: MyPy type check
         run: uv run mypy src/symeraseme/
+      - name: Check for raw typer.echo error emissions
+        run: |
+          if grep -rn 'typer\.echo.*err=True' src/symeraseme/services/; then
+            echo "ERROR: Found raw typer.echo error emissions. Use render_error() or print_error() instead."
+            exit 1
+          fi
+          echo "OK: No raw typer.echo error emissions found."
 
   test:
     runs-on: ubuntu-latest
