@@ -104,7 +104,7 @@ async def run_web_form(
             result.success = True
         except PlaywrightRunnerError:
             raise
-        except Exception as e:
+        except (RuntimeError, ValueError, OSError) as e:
             result.error = _capture_error(e, page.url if page else url)
             if screenshot_dir_path:
                 result.screenshot_path = str(

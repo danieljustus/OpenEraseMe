@@ -137,8 +137,8 @@ class TestOpenAIClientRetry:
 
     def test_retry_exhausted_raises_rate_limit_error(self, fake_openai_module):
         mock_client = MagicMock()
-        mock_client.chat.completions.create.side_effect = (
-            fake_openai_module.RateLimitError("rate limited")
+        mock_client.chat.completions.create.side_effect = fake_openai_module.RateLimitError(
+            "rate limited"
         )
         fake_openai_module.OpenAI.return_value = mock_client
 

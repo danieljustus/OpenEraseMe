@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from symeraseme.adapters.triage.scrubber import scrub_pii
-from symeraseme.llm.protocol import LLMClient
+from symeraseme.llm.protocol import LLMClient, LLMClientError
 
 logger = logging.getLogger(__name__)
 
@@ -199,7 +199,7 @@ class ReplyClassifier:
                 user_prompt=user_prompt,
                 cache_key=cache_key or broker_name,
             )
-        except Exception as e:
+        except LLMClientError as e:
             logger.warning("Classifier API call failed: %s", e)
             return ClassificationResult(
                 label="unclear",

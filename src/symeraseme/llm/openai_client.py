@@ -153,8 +153,6 @@ class OpenAIClient:
             raise LLMClientRateLimitError(str(e)) from e
         except (openai.APIStatusError, openai.APIConnectionError) as e:
             raise LLMClientError(str(e)) from e
-        except Exception as e:
-            raise LLMClientError(str(e)) from e
 
         response_text = ""
         if response.choices and len(response.choices) > 0:

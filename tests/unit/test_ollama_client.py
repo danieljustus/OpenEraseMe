@@ -29,34 +29,40 @@ class MockHTTPResponse:
 
 class TestOllamaClientIsAvailable:
     def test_available_when_model_present(self):
-        response_body = json.dumps({
-            "models": [
-                {"name": "llama3.1", "model": "llama3.1:latest"},
-                {"name": "mistral", "model": "mistral:latest"},
-            ]
-        }).encode("utf-8")
+        response_body = json.dumps(
+            {
+                "models": [
+                    {"name": "llama3.1", "model": "llama3.1:latest"},
+                    {"name": "mistral", "model": "mistral:latest"},
+                ]
+            }
+        ).encode("utf-8")
 
         with patch("urllib.request.urlopen", return_value=MockHTTPResponse(response_body)):
             client = OllamaClient(model="llama3.1")
             assert client.is_available()
 
     def test_available_when_model_matches_model_field(self):
-        response_body = json.dumps({
-            "models": [
-                {"name": "llama3.1:latest", "model": "llama3.1:latest"},
-            ]
-        }).encode("utf-8")
+        response_body = json.dumps(
+            {
+                "models": [
+                    {"name": "llama3.1:latest", "model": "llama3.1:latest"},
+                ]
+            }
+        ).encode("utf-8")
 
         with patch("urllib.request.urlopen", return_value=MockHTTPResponse(response_body)):
             client = OllamaClient(model="llama3.1:latest")
             assert client.is_available()
 
     def test_not_available_when_model_missing(self):
-        response_body = json.dumps({
-            "models": [
-                {"name": "mistral", "model": "mistral:latest"},
-            ]
-        }).encode("utf-8")
+        response_body = json.dumps(
+            {
+                "models": [
+                    {"name": "mistral", "model": "mistral:latest"},
+                ]
+            }
+        ).encode("utf-8")
 
         with patch("urllib.request.urlopen", return_value=MockHTTPResponse(response_body)):
             client = OllamaClient(model="llama3.1")
@@ -86,9 +92,9 @@ class TestOllamaClientIsAvailable:
             assert not client.is_available()
 
     def test_custom_host(self):
-        response_body = json.dumps({
-            "models": [{"name": "llama3.1", "model": "llama3.1:latest"}]
-        }).encode("utf-8")
+        response_body = json.dumps(
+            {"models": [{"name": "llama3.1", "model": "llama3.1:latest"}]}
+        ).encode("utf-8")
 
         with patch("urllib.request.urlopen") as mock_urlopen:
             mock_urlopen.return_value = MockHTTPResponse(response_body)
@@ -103,12 +109,14 @@ class TestOllamaClientIsAvailable:
 
 class TestOllamaClientClassify:
     def test_classify_success(self):
-        response_body = json.dumps({
-            "model": "llama3.1",
-            "message": {"role": "assistant", "content": "positive"},
-            "prompt_eval_count": 25,
-            "eval_count": 8,
-        }).encode("utf-8")
+        response_body = json.dumps(
+            {
+                "model": "llama3.1",
+                "message": {"role": "assistant", "content": "positive"},
+                "prompt_eval_count": 25,
+                "eval_count": 8,
+            }
+        ).encode("utf-8")
 
         with patch("urllib.request.urlopen", return_value=MockHTTPResponse(response_body)):
             client = OllamaClient()
@@ -125,12 +133,14 @@ class TestOllamaClientClassify:
         assert record.cost == 0.0
 
     def test_classify_with_custom_model(self):
-        response_body = json.dumps({
-            "model": "mistral",
-            "message": {"role": "assistant", "content": "negative"},
-            "prompt_eval_count": 30,
-            "eval_count": 12,
-        }).encode("utf-8")
+        response_body = json.dumps(
+            {
+                "model": "mistral",
+                "message": {"role": "assistant", "content": "negative"},
+                "prompt_eval_count": 30,
+                "eval_count": 12,
+            }
+        ).encode("utf-8")
 
         with patch("urllib.request.urlopen", return_value=MockHTTPResponse(response_body)):
             client = OllamaClient(model="mistral")
@@ -140,12 +150,14 @@ class TestOllamaClientClassify:
         assert record.model == "mistral"
 
     def test_classify_payload_structure(self):
-        response_body = json.dumps({
-            "model": "llama3.1",
-            "message": {"role": "assistant", "content": "ok"},
-            "prompt_eval_count": 10,
-            "eval_count": 2,
-        }).encode("utf-8")
+        response_body = json.dumps(
+            {
+                "model": "llama3.1",
+                "message": {"role": "assistant", "content": "ok"},
+                "prompt_eval_count": 10,
+                "eval_count": 2,
+            }
+        ).encode("utf-8")
 
         with patch("urllib.request.urlopen") as mock_urlopen:
             mock_urlopen.return_value = MockHTTPResponse(response_body)
@@ -171,12 +183,14 @@ class TestOllamaClientClassify:
         assert payload["messages"][1]["content"] == "Classify this."
 
     def test_classify_empty_response(self):
-        response_body = json.dumps({
-            "model": "llama3.1",
-            "message": {},
-            "prompt_eval_count": 0,
-            "eval_count": 0,
-        }).encode("utf-8")
+        response_body = json.dumps(
+            {
+                "model": "llama3.1",
+                "message": {},
+                "prompt_eval_count": 0,
+                "eval_count": 0,
+            }
+        ).encode("utf-8")
 
         with patch("urllib.request.urlopen", return_value=MockHTTPResponse(response_body)):
             client = OllamaClient()
@@ -189,12 +203,14 @@ class TestOllamaClientClassify:
 
 class TestOllamaClientCost:
     def test_cost_is_always_zero(self):
-        response_body = json.dumps({
-            "model": "llama3.1",
-            "message": {"role": "assistant", "content": "test"},
-            "prompt_eval_count": 1000,
-            "eval_count": 500,
-        }).encode("utf-8")
+        response_body = json.dumps(
+            {
+                "model": "llama3.1",
+                "message": {"role": "assistant", "content": "test"},
+                "prompt_eval_count": 1000,
+                "eval_count": 500,
+            }
+        ).encode("utf-8")
 
         with patch("urllib.request.urlopen", return_value=MockHTTPResponse(response_body)):
             client = OllamaClient()
@@ -203,12 +219,14 @@ class TestOllamaClientCost:
         assert record.cost == 0.0
 
     def test_cost_tracker_appends(self):
-        response_body = json.dumps({
-            "model": "llama3.1",
-            "message": {"role": "assistant", "content": "test"},
-            "prompt_eval_count": 100,
-            "eval_count": 50,
-        }).encode("utf-8")
+        response_body = json.dumps(
+            {
+                "model": "llama3.1",
+                "message": {"role": "assistant", "content": "test"},
+                "prompt_eval_count": 100,
+                "eval_count": 50,
+            }
+        ).encode("utf-8")
 
         tracker: list[UsageRecord] = []
         with patch("urllib.request.urlopen", return_value=MockHTTPResponse(response_body)):

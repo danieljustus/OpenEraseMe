@@ -92,8 +92,6 @@ class OllamaClient:
             raise LLMClientError(f"Ollama connection error: {e}") from e
         except json.JSONDecodeError as e:
             raise LLMClientError(f"Invalid JSON from Ollama: {e}") from e
-        except Exception as e:
-            raise LLMClientError(f"Unexpected Ollama error: {e}") from e
 
         response_text = ""
         message = data.get("message", {})

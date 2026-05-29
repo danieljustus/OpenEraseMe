@@ -207,7 +207,7 @@ async def auto_confirm(
                         clicked = True
                         result.step = f"clicked_{selector}"
                         break
-                except Exception:
+                except (RuntimeError, ValueError):
                     logger.debug("Selector %s not found or not clickable", selector)
                     continue
 
@@ -218,7 +218,7 @@ async def auto_confirm(
                         await first_link.click()
                         clicked = True
                         result.step = "clicked_fallback_link"
-                except Exception:
+                except (RuntimeError, ValueError):
                     logger.debug("Fallback link click failed")
 
             if not clicked:
@@ -241,7 +241,7 @@ async def auto_confirm(
                 )
                 result.screenshot_after = screenshot_after_path
 
-        except Exception as e:
+        except (RuntimeError, ValueError, OSError) as e:
             result.error = _capture_clicker_error(e, page.url if page else target_url)
             if screenshot_dir_path:
                 screenshot_after_path = str(

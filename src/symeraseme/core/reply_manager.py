@@ -205,7 +205,7 @@ def draft_reply(
         broker = load_broker(broker_id)
         broker_name = broker.name
         broker_website = broker.website
-    except Exception:
+    except (FileNotFoundError, ValueError, RuntimeError, OSError, LookupError):
         pass
 
     classification = reply.get("classified_as", "unclear")

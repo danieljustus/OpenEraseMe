@@ -147,13 +147,13 @@ def poll_inbox(
     """
     try:
         mail = imaplib.IMAP4_SSL(host, port) if ssl else imaplib.IMAP4(host, port)
-    except Exception as e:
+    except (OSError, imaplib.IMAP4.error) as e:
         msg = f"Failed to connect to {host}:{port}: {e}"
         raise IMAPError(msg) from e
 
     try:
         mail.login(username, password)
-    except Exception as e:
+    except (OSError, imaplib.IMAP4.error) as e:
         mail.logout()
         msg = f"IMAP login failed for {username}: {e}"
         raise IMAPError(msg) from e
@@ -162,7 +162,7 @@ def poll_inbox(
         mail.select(folder)
         since_date = (datetime.now(UTC) - timedelta(days=since_days)).strftime("%d-%b-%Y")
         status, message_ids = mail.search(None, f"SINCE {since_date}")
-    except Exception as e:
+    except (OSError, imaplib.IMAP4.error) as e:
         mail.logout()
         msg = f"IMAP search failed: {e}"
         raise IMAPError(msg) from e
@@ -188,7 +188,7 @@ def poll_inbox(
             parsed = _parse_email(raw)
             parsed["imap_uid"] = msg_id.decode()
             messages.append(parsed)
-        except Exception as e:
+        except (OSError, imaplib.IMAP4.error) as e:
             logger.warning("Failed to fetch IMAP message %s: %s", msg_id, e)
             continue
 
@@ -249,7 +249,7 @@ def list_messages(
         date_str = headers.get("Date", "")
         date = None
         if date_str:
-            with contextlib.suppress(Exception):
+            with contextlib.suppress(ValueError):
                 date = email.utils.parsedate_to_datetime(date_str)
         envelopes.append(
             Envelope(
@@ -277,13 +277,13 @@ def get_message(
     """Fetch a single IMAP message by UID, returning a Himalaya-compatible Message."""
     try:
         mail = imaplib.IMAP4_SSL(host, port) if ssl else imaplib.IMAP4(host, port)
-    except Exception as e:
+    except (OSError, imaplib.IMAP4.error) as e:
         msg = f"Failed to connect to {host}:{port}: {e}"
         raise IMAPError(msg) from e
 
     try:
         mail.login(username, password)
-    except Exception as e:
+    except (OSError, imaplib.IMAP4.error) as e:
         mail.logout()
         msg = f"IMAP login failed for {username}: {e}"
         raise IMAPError(msg) from e
@@ -305,7 +305,7 @@ def get_message(
         date_str = headers.get("Date", "")
         date = None
         if date_str:
-            with contextlib.suppress(Exception):
+            with contextlib.suppress(ValueError):
                 date = email.utils.parsedate_to_datetime(date_str)
         mail.logout()
         return Message(
@@ -319,7 +319,7 @@ def get_message(
         )
     except IMAPError:
         raise
-    except Exception as e:
+    except (OSError, imaplib.IMAP4.error) as e:
         mail.logout()
         msg = f"Failed to fetch message {message_id}: {e}"
         raise IMAPError(msg) from e

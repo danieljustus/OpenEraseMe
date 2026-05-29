@@ -92,8 +92,9 @@ class TestLLMClientProtocol:
             def is_available(self) -> bool:
                 return True
 
-            def classify(self, system_prompt, user_prompt, *, max_tokens=512,
-                         temperature=0.0, cache_key=None):
+            def classify(
+                self, system_prompt, user_prompt, *, max_tokens=512, temperature=0.0, cache_key=None
+            ):
                 return ("response", UsageRecord(model="fake"))
 
         client = FakeClient()
@@ -107,8 +108,9 @@ class TestLLMClientProtocol:
             def is_available(self) -> bool:
                 return False
 
-            def classify(self, system_prompt, user_prompt, *, max_tokens=512,
-                         temperature=0.0, cache_key=None):
+            def classify(
+                self, system_prompt, user_prompt, *, max_tokens=512, temperature=0.0, cache_key=None
+            ):
                 return ("", UsageRecord(model="nc"))
 
         # Should not raise — close is optional
@@ -122,8 +124,9 @@ class TestLLMClientProtocol:
             def is_available(self) -> bool:
                 return True
 
-            def classify(self, system_prompt, user_prompt, *, max_tokens=512,
-                         temperature=0.0, cache_key=None):
+            def classify(
+                self, system_prompt, user_prompt, *, max_tokens=512, temperature=0.0, cache_key=None
+            ):
                 return ("ok", UsageRecord(model="cc"))
 
             def close(self) -> None:

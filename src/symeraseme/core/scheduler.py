@@ -429,9 +429,7 @@ def generate_launchd(
         project_dir=project_dir,
         venv_activate=venv,
     )
-    poll_entries = "\n".join(
-        _plist_calendar(t.hour, t.minute) for t in config.poll_times
-    )
+    poll_entries = "\n".join(_plist_calendar(t.hour, t.minute) for t in config.poll_times)
     out["com.symeraseme.poll.plist"] = _plist_content(
         label="com.symeraseme.poll",
         wrapper_path="__WRAPPER_DIR__/symeraseme-poll.sh",
@@ -448,9 +446,7 @@ def generate_launchd(
     out["com.symeraseme.rescan.plist"] = _plist_content(
         label="com.symeraseme.rescan",
         wrapper_path="__WRAPPER_DIR__/symeraseme-rescan.sh",
-        schedule_interval=_launchd_quarter_dates(
-            config.tick_time.hour, config.tick_time.minute
-        ),
+        schedule_interval=_launchd_quarter_dates(config.tick_time.hour, config.tick_time.minute),
         wrap_array=True,
     )
 

@@ -96,7 +96,7 @@ def _get_db_fernet_key(*, salt: bytes | None = None) -> bytes | None:
         from symeraseme.core.identity import _get_existing_master_key
 
         master_key = _get_existing_master_key()
-    except Exception as exc:
+    except (ImportError, RuntimeError, OSError, ValueError) as exc:
         logger.debug("DB encryption key unavailable: %s", exc)
         return None
 
@@ -166,7 +166,7 @@ def _cleanup_temp_files() -> None:
         try:
             if tmp.exists():
                 _encrypt_file(tmp, orig)
-        except Exception as exc:
+        except (OSError, RuntimeError, ValueError) as exc:
             logger.warning("Failed to re-encrypt DB %s: %s", orig, exc)
         finally:
             try:
@@ -176,7 +176,7 @@ def _cleanup_temp_files() -> None:
                     sibling = tmp.with_suffix(tmp.suffix + suffix)
                     if sibling.exists():
                         sibling.unlink(missing_ok=True)
-            except Exception as exc:
+            except OSError as exc:
                 logger.warning("Failed to remove temp file %s: %s", tmp, exc)
     _DB_TEMP.clear()
 
@@ -233,7 +233,7 @@ def close_connection() -> None:
         try:
             if tmp.exists():
                 _encrypt_file(tmp, orig)
-        except Exception as exc:
+        except (OSError, RuntimeError, ValueError) as exc:
             logger.warning("Failed to re-encrypt DB %s: %s", orig, exc)
         finally:
             try:
@@ -243,7 +243,7 @@ def close_connection() -> None:
                     sibling = tmp.with_suffix(tmp.suffix + suffix)
                     if sibling.exists():
                         sibling.unlink(missing_ok=True)
-            except Exception as exc:
+            except OSError as exc:
                 logger.warning("Failed to remove temp file %s: %s", tmp, exc)
     _DB_TEMP.clear()
 

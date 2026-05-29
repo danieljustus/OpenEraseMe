@@ -107,6 +107,7 @@ app.command(rich_help_panel="Account & Profile")(show_profile)
 app.command(rich_help_panel="Account & Profile")(render_template)
 app.command(rich_help_panel="Account & Profile")(grant)
 
+
 # ── Planning & Execution (deprecated top-level aliases) ───────────────────
 @app.command(rich_help_panel="Planning & Execution", deprecated=True)
 def execute(

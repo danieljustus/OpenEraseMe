@@ -282,7 +282,7 @@ async def send_messages_batch(
                         "message_id": message_id,
                     }
                 )
-            except Exception as e:
+            except (OSError, ValueError, RuntimeError) as e:
                 logger.warning("Failed to send to %s: %s", msg.to, e)
                 results.append(
                     {
@@ -294,7 +294,7 @@ async def send_messages_batch(
                 )
 
         await smtp.quit()
-    except Exception as e:
+    except (OSError, ValueError, RuntimeError) as e:
         logger.error("SMTP connection failed: %s", e)
         for msg in messages:
             results.append(

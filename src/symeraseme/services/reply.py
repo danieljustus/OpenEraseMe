@@ -72,7 +72,7 @@ def handle_classify_reply(
     broker_id = req.get("broker_id", "")
     try:
         broker = load_broker(broker_id)
-    except Exception:
+    except (FileNotFoundError, ValueError, RuntimeError, OSError, LookupError):
         logger.warning("Failed to load broker %s", broker_id)
         broker = None
 
@@ -206,7 +206,7 @@ def handle_generate_rebuttal(
     broker_id = req.get("broker_id", "")
     try:
         broker = load_broker(broker_id)
-    except Exception:
+    except (FileNotFoundError, ValueError, RuntimeError, OSError, LookupError):
         logger.warning("Failed to load broker %s", broker_id)
         broker = None
 

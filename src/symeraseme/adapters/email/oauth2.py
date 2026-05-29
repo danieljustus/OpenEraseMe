@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from typing import Any
+from urllib.error import URLError
 from urllib.parse import parse_qs, urlencode
 from urllib.request import Request, urlopen
 
@@ -228,7 +229,7 @@ def exchange_code(
     try:
         with urlopen(req, timeout=30) as resp:
             return dict(json.loads(resp.read()))
-    except Exception as e:
+    except (URLError, OSError, json.JSONDecodeError, ValueError) as e:
         msg = f"Token exchange failed: {e}"
         raise OAuth2Error(msg) from e
 
@@ -257,7 +258,7 @@ def refresh_access_token(
     try:
         with urlopen(req, timeout=30) as resp:
             return dict(json.loads(resp.read()))
-    except Exception as e:
+    except (URLError, OSError, json.JSONDecodeError, ValueError) as e:
         msg = f"Token refresh failed: {e}"
         raise OAuth2Error(msg) from e
 
