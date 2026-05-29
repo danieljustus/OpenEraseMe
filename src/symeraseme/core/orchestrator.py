@@ -371,9 +371,7 @@ async def execute_campaign_async(
             results: list[dict[str, Any]] = []
             for req in batch:
                 progress.update(task, description=f"Processing {req['broker_id']}...")
-                r = execute_request(
-                    req["id"], dry_run=True, web_form_runner=web_form_runner
-                )
+                r = execute_request(req["id"], dry_run=True, web_form_runner=web_form_runner)
                 results.append(r)
                 progress.advance(task)
             return {
@@ -409,11 +407,7 @@ async def execute_campaign_async(
             progress.update(task, description=f"Preparing {broker_name}...")
             events = events_by_rid.get(req_id, [])
             last_event = events[-1] if events else {}
-            payload = (
-                last_event.get("payload_json", {})
-                if isinstance(last_event, dict)
-                else {}
-            )
+            payload = last_event.get("payload_json", {}) if isinstance(last_event, dict) else {}
             channel_endpoint = payload.get("endpoint", "")
             template_id = req.get("template_id", "")
 
@@ -445,9 +439,7 @@ async def execute_campaign_async(
                 "results": [],
             }
 
-        progress.update(
-            task, description="Sending batch via SMTP...", completed=len(batch)
-        )
+        progress.update(task, description="Sending batch via SMTP...", completed=len(batch))
         send_results = await send_messages_batch(
             email_messages,
             smtp_config=smtp_config,
