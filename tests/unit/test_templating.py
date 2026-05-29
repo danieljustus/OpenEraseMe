@@ -117,9 +117,7 @@ class TestTemplatingEngine:
 
         template_dir = tmp_path / "templates"
         template_dir.mkdir()
-        (template_dir / "test.html.j2").write_text(
-            "<div>{{ user_input }}</div>"
-        )
+        (template_dir / "test.html.j2").write_text("<div>{{ user_input }}</div>")
 
         result = render_template(
             "test.html.j2",

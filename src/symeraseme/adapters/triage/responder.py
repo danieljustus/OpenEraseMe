@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from symeraseme.adapters.triage.scrubber import scrub_pii
-from symeraseme.llm.protocol import LLMClient
+from symeraseme.llm.protocol import LLMClient, LLMClientError
 from symeraseme.registry.schema import IdentityProfile
 
 logger = logging.getLogger(__name__)
@@ -206,7 +206,7 @@ def generate_rebuttal(
             )
             llm_used = True
             usage_record = usage
-        except Exception as e:
+        except LLMClientError as e:
             logger.warning("LLM classification failed: %s — using fallback", e)
             rejection_classification = None
             usage_record = None

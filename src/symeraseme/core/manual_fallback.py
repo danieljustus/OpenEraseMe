@@ -13,6 +13,7 @@ import asyncio
 import json
 import logging
 import os
+import sqlite3
 import time
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -158,11 +159,16 @@ def capture_form_state(
         try:
             html_snapshot = await _async_get_content(page)
         except Exception as e:
+            # _async_get_content wraps a Playwright page method; Playwright
+            # exceptions (e.g. playwright._impl._errors.Error) cannot be
+            # referenced without importing the optional [web] dependency.
             logger.warning("Failed to capture HTML snapshot: %s", e)
 
         try:
             form_fields, field_selectors = await _async_extract_form_fields(page)
         except Exception as e:
+            # _async_extract_form_fields wraps Playwright's page.evaluate;
+            # Playwright exception types are not importable here.
             logger.warning("Failed to extract form fields: %s", e)
 
         if screenshot_dir:
@@ -171,6 +177,8 @@ def capture_form_state(
                     page, Path(screenshot_dir), "manual_fallback"
                 )
             except Exception as e:
+                # _async_save_screenshot wraps Playwright's page.screenshot;
+                # Playwright exception types are not importable here.
                 logger.warning("Failed to save screenshot: %s", e)
 
     asyncio.run(_capture())
@@ -364,7 +372,7 @@ def create_manual_task(
                 },
                 source="system",
             )
-        except Exception as e:
+        except (sqlite3.Error, ValueError, RuntimeError) as e:
             logger.warning("Failed to append event for manual task: %s", e)
 
     return ManualTask(
@@ -422,7 +430,7 @@ def resume_from_manual(
                 },
                 source="user",
             )
-        except Exception as e:
+        except (sqlite3.Error, ValueError, RuntimeError) as e:
             logger.warning("Failed to append resume event: %s", e)
 
     return ManualTask(

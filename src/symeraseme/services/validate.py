@@ -49,7 +49,7 @@ def handle_validate(
 
         try:
             broker = Broker.model_validate(data)
-        except Exception as e:
+        except ValueError as e:
             failed_files.append({"file": rel, "stage": "pydantic", "error": str(e)[:300]})
             continue
 

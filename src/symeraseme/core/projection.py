@@ -175,6 +175,10 @@ def append_event_and_project(
         state = upsert_state(request_id, commit=False)
         conn.commit()
     except Exception:
+        # Narrowing is unsafe here: this is a transaction boundary that must
+        # rollback on ANY error (including unexpected ones like
+        # sqlite3.OperationalError or KeyboardInterrupt-during-I/O).
+        # The original exception is re-raised to the caller unchanged.
         conn.rollback()
         raise
     return eid, state

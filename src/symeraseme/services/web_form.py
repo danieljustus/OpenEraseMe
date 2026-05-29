@@ -131,7 +131,7 @@ async def handle_run_web_form(
 ) -> str:
     try:
         broker = load_broker(broker_id)
-    except Exception as e:
+    except (FileNotFoundError, ValueError, RuntimeError, OSError) as e:
         render_error(
             f"Broker '{broker_id}' not found: {e}. "
             "Run 'symeraseme brokers list' to see available brokers."

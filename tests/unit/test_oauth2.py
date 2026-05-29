@@ -50,6 +50,7 @@ def _state_file(tmp_path: Path) -> None:
 class TestAuthorizeUrl:
     def _parse_qs(self, url: str) -> dict[str, list[str]]:
         import urllib.parse
+
         return urllib.parse.parse_qs(urllib.parse.urlsplit(url).query)
 
     def test_generates_gmail_url(self):
@@ -68,10 +69,16 @@ class TestAuthorizeUrl:
         assert len(verifier) <= 128
 
     def test_code_challenge_is_sha256_of_verifier(self):
-        import base64, hashlib
+        import base64
+        import hashlib
+
         url, verifier = authorize_url("gmail", "id", "http://localhost/")
         qs = self._parse_qs(url)
-        expected = base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest()).rstrip(b"=").decode()
+        expected = (
+            base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest())
+            .rstrip(b"=")
+            .decode()
+        )
         assert qs["code_challenge"][0] == expected
 
     def test_generates_outlook_url(self):

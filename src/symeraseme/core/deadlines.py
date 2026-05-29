@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import sqlite3
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from typing import Any
@@ -314,7 +315,7 @@ def apply_tick_actions(
                     "dry_run": False,
                 }
             )
-        except Exception as e:
+        except (sqlite3.Error, ValueError, RuntimeError) as e:
             logger.error("Failed to apply tick action %s: %s", action, e)
             results.append(
                 {

@@ -162,13 +162,25 @@ class TestCostTrackerPassthrough:
 
 class TestLazyImportError:
     def test_missing_module_raises_provider_error(self):
-        with patch.dict("symeraseme.llm.factory._PROVIDERS", {
-            "broken": ("nonexistent.module.path", "SomeClass", "API_KEY", "model"),
-        }), pytest.raises(LLMProviderError, match="Cannot import"):
+        with (
+            patch.dict(
+                "symeraseme.llm.factory._PROVIDERS",
+                {
+                    "broken": ("nonexistent.module.path", "SomeClass", "API_KEY", "model"),
+                },
+            ),
+            pytest.raises(LLMProviderError, match="Cannot import"),
+        ):
             create_llm_client(provider="broken")
 
     def test_missing_class_raises_provider_error(self):
-        with patch.dict("symeraseme.llm.factory._PROVIDERS", {
-            "badclass": ("symeraseme.llm.protocol", "DoesNotExist", "API_KEY", "model"),
-        }), pytest.raises(LLMProviderError, match="has no class"):
+        with (
+            patch.dict(
+                "symeraseme.llm.factory._PROVIDERS",
+                {
+                    "badclass": ("symeraseme.llm.protocol", "DoesNotExist", "API_KEY", "model"),
+                },
+            ),
+            pytest.raises(LLMProviderError, match="has no class"),
+        ):
             create_llm_client(provider="badclass")
