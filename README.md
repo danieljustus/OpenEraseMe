@@ -104,7 +104,7 @@ $ symeraseme plan create --campaign initial --law GDPR --max 5
 ✓ Plan created: 5 brokers selected
   Campaign: initial
 
-$ symeraseme status
+$ symeraseme plan status
 Campaign: initial
 ┏━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━┓
 ┃ Broker      ┃ Status      ┃ Deadline             ┃
@@ -127,10 +127,10 @@ symeraseme plan create --campaign initial --jurisdiction GDPR --max 10
 symeraseme plan show --campaign initial
 
 # Execute the plan in batches (respects rate limits, requires consent)
-symeraseme execute --campaign initial --batch-size 5 --delay 30 --yes
+symeraseme plan execute --campaign initial --batch-size 5 --delay 30 --yes
 
 # Check overall campaign progress
-symeraseme status
+symeraseme plan status
 
 # View deadline calendar and upcoming tick actions
 symeraseme calendar --weeks 4
@@ -166,8 +166,8 @@ symeraseme manual-tasks complete <task_id>
 
 ```bash
 # Run the tick engine (checks deadlines, reminders, escalations)
-symeraseme tick --dry-run
-symeraseme tick
+symeraseme plan tick --dry-run
+symeraseme plan tick
 
 # Generate scheduler configs (cron / launchd / systemd)
 symeraseme generate-scheduler --output ./schedules
@@ -294,7 +294,7 @@ examples/        — Integration examples for Claude Code, OpenClaw, cron
 
 - **Identity profile encryption**: Profiles are encrypted with AES-256-GCM and authenticated with the header as AAD. Files written since v0.1.2 use header `version: 2`; earlier files used `version: 1`. A legacy no-AAD fallback exists for `version: 0` files only — any tampered ciphertext on version 1+ fails closed with `InvalidTag`.
 - **Database encryption**: When `SYMERASEME_ENCRYPT_DB=1` is set, the SQLite database is encrypted at rest using AES-256-GCM with a key derived from your identity master key. On open, the database is decrypted to a temporary file with restrictive permissions (`0o600`). The temp file is placed in a memory-backed directory where the platform supports it (Linux: `/dev/shm`; macOS: `/tmp` RAM disk; Windows: OS temp directory on disk). On normal exit, SIGTERM, or context close, the temp file is re-encrypted and removed. A `SIGKILL` (e.g., `kill -9`, OOM killer, or system crash) may leave the decrypted temp file behind. On Linux and macOS the temp file resides in memory and is lost on reboot; on Windows it may persist on disk. If this is a concern for your threat model, consider running Symaira EraseMe on a single-user system or using full-disk encryption.
-- **Consent tokens**: Consent tokens passed via `--consent` or the `SYMERASEME_CONSENT` environment variable are visible in process listings (`ps aux`), shell history, and crash dumps. On shared systems or CI runners, prefer `--consent-file` or `SYMERASEME_CONSENT_FILE` to read the token from a file with `0o600` permissions. The file is read once and the token is consumed (`consume_token`) after verification. Pipe-based input is supported: `echo $TOKEN | symeraseme execute --consent-file /dev/stdin`.
+- **Consent tokens**: Consent tokens passed via `--consent` or the `SYMERASEME_CONSENT` environment variable are visible in process listings (`ps aux`), shell history, and crash dumps. On shared systems or CI runners, prefer `--consent-file` or `SYMERASEME_CONSENT_FILE` to read the token from a file with `0o600` permissions. The file is read once and the token is consumed (`consume_token`) after verification. Pipe-based input is supported: `echo $TOKEN | symeraseme plan execute --consent-file /dev/stdin`.
 
 ## License
 

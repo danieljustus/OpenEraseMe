@@ -75,6 +75,7 @@ def plan_show(
     render_result(ctx.obj["output"], result)
 
 
+@plan_app.command()
 def execute(
     ctx: typer.Context,
     campaign_id: str = typer.Option(
@@ -138,6 +139,7 @@ def execute(
     render_result(ctx.obj["output"], result)
 
 
+@plan_app.command()
 def tick(
     ctx: typer.Context,
     dry_run: bool = typer.Option(
@@ -169,6 +171,7 @@ def tick(
     render_result(ctx.obj["output"], result)
 
 
+@plan_app.command()
 def status(
     ctx: typer.Context,
     campaign: str = typer.Option(
