@@ -11,9 +11,9 @@ from symeraseme.adapters.web.playwright_runner import (
     run_web_form as _run_form,
 )
 from symeraseme.cli.console import render_error
-from symeraseme.core.result_types import CliResult
 from symeraseme.core.identity import load_profile, profile_exists
 from symeraseme.core.manual_fallback import create_manual_task
+from symeraseme.core.result_types import CliResult
 from symeraseme.registry.loader import load_broker
 from symeraseme.registry.schema import WebFormOptOut
 

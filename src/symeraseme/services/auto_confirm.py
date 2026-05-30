@@ -6,10 +6,10 @@ import typer
 
 from symeraseme.adapters.web.confirmation_clicker import auto_confirm
 from symeraseme.cli.console import render_error
-from symeraseme.core.result_types import CliResult
 from symeraseme.core.db import get_connection, init_db
 from symeraseme.core.events import get_events, get_removal_request
 from symeraseme.core.projection import append_event_and_project
+from symeraseme.core.result_types import CliResult
 
 
 def handle_auto_confirm(

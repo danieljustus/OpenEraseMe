@@ -8,10 +8,10 @@ from symeraseme.adapters.email.smtp_imap import (
     poll_inbox as _poll,
 )
 from symeraseme.cli.console import render_error
-from symeraseme.core.result_types import CliResult
 from symeraseme.core.db import init_db
 from symeraseme.core.events import get_events_for_requests, list_removal_requests
 from symeraseme.core.orchestrator import submit_inbox_reply
+from symeraseme.core.result_types import CliResult
 
 
 def handle_poll_inbox(

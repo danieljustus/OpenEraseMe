@@ -22,7 +22,11 @@ def handle_solve_captcha(
                 "site_key": site_key,
                 "page_url": page_url,
                 "dry_run": True,
-                "message": f"[DRY RUN] Would solve captcha via {provider}:\n  site_key: {site_key}\n  page_url: {page_url}",
+                "message": (
+                    f"[DRY RUN] Would solve captcha via {provider}:\n"
+                    f"  site_key: {site_key}\n"
+                    f"  page_url: {page_url}"
+                ),
             },
         )
 

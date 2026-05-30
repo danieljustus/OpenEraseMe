@@ -4,9 +4,9 @@ import webbrowser
 from pathlib import Path
 from typing import Any
 
-from symeraseme.core.result_types import CliResult
 from symeraseme.core.dashboard import generate_dashboard, get_dashboard_data
 from symeraseme.core.reports import generate_report, get_report_data
+from symeraseme.core.result_types import CliResult
 
 
 def handle_generate_dashboard(
@@ -56,7 +56,10 @@ def handle_generate_report(
             Path(output).write_text(__import__("json").dumps(report, indent=2, default=str))
             return CliResult(
                 success=True,
-                data={"output_file": str(Path(output).resolve()), "message": f"Report written to {Path(output).resolve()}"},
+                data={
+                    "output_file": str(Path(output).resolve()),
+                    "message": f"Report written to {Path(output).resolve()}",
+                },
             )
         return CliResult(
             success=True,
@@ -68,7 +71,10 @@ def handle_generate_report(
         Path(output).write_text(content)
         return CliResult(
             success=True,
-            data={"output_file": str(Path(output).resolve()), "message": f"Report written to {Path(output).resolve()}"},
+            data={
+                "output_file": str(Path(output).resolve()),
+                "message": f"Report written to {Path(output).resolve()}",
+            },
         )
 
     default_name = f"report-{campaign_id or 'all'}.{format}"
@@ -76,5 +82,8 @@ def handle_generate_report(
     Path(default_name).write_text(content)
     return CliResult(
         success=True,
-        data={"output_file": str(Path(default_name).resolve()), "message": f"Report written to {Path(default_name).resolve()}"},
+        data={
+            "output_file": str(Path(default_name).resolve()),
+            "message": f"Report written to {Path(default_name).resolve()}",
+        },
     )

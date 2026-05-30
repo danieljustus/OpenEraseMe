@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 
-from symeraseme.core.result_types import CliResult
 from symeraseme.core.consent import check_consent
 from symeraseme.core.db import init_db
 from symeraseme.core.orchestrator import (
@@ -13,6 +12,7 @@ from symeraseme.core.orchestrator import (
     get_plan,
     plan_campaign,
 )
+from symeraseme.core.result_types import CliResult
 
 
 def handle_plan_create(

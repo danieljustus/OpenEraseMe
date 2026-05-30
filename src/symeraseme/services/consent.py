@@ -4,7 +4,6 @@ import time
 from datetime import datetime
 
 from symeraseme.cli.console import render_error
-from symeraseme.core.result_types import CliResult
 from symeraseme.core.consent import (
     consume_token,
     issue_token,
@@ -13,6 +12,7 @@ from symeraseme.core.consent import (
 from symeraseme.core.consent import (
     list_tokens as _list_tokens,
 )
+from symeraseme.core.result_types import CliResult
 
 
 def handle_grant(
@@ -43,7 +43,11 @@ def handle_grant(
         if dry_run:
             return CliResult(
                 success=True,
-                data={"revoke": revoke, "dry_run": True, "message": f"[DRY RUN] Would revoke token: {revoke}"},
+                data={
+                    "revoke": revoke,
+                    "dry_run": True,
+                    "message": f"[DRY RUN] Would revoke token: {revoke}",
+                },
             )
         if revoke_token(revoke):
             return CliResult(
@@ -75,7 +79,11 @@ def handle_grant(
             consume_token(t["token"])
         return CliResult(
             success=True,
-            data={"revoke_all": True, "revoked_count": len(tokens), "message": f"Revoked {len(tokens)} token(s)."},
+            data={
+                "revoke_all": True,
+                "revoked_count": len(tokens),
+                "message": f"Revoked {len(tokens)} token(s).",
+            },
         )
 
     if dry_run:

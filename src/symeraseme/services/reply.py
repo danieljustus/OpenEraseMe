@@ -6,12 +6,12 @@ from symeraseme.adapters.triage.classifier import ReplyClassifier
 from symeraseme.adapters.triage.responder import generate_rebuttal
 from symeraseme.adapters.triage.scrubber import grant_llm_consent, llm_consent_granted
 from symeraseme.cli.console import render_error
-from symeraseme.core.result_types import CliResult
 from symeraseme.core.db import get_connection, init_db
 from symeraseme.core.events import get_events, get_removal_request
 from symeraseme.core.identity import load_profile, profile_exists
 from symeraseme.core.orchestrator import submit_inbox_reply
 from symeraseme.core.projection import append_event_and_project
+from symeraseme.core.result_types import CliResult
 from symeraseme.registry.loader import load_broker
 
 logger = logging.getLogger(__name__)
@@ -276,4 +276,3 @@ def handle_generate_rebuttal(
 
     data["message"] = "\n".join(lines)
     return CliResult(success=True, data=data)
-

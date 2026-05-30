@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from symeraseme.cli.console import render_error
-from symeraseme.core.result_types import CliResult
 from symeraseme.core.db import init_db
 from symeraseme.core.manual_fallback import get_manual_task, list_manual_tasks, resume_from_manual
+from symeraseme.core.result_types import CliResult
 
 
 def handle_manual_tasks_list(
@@ -106,7 +106,9 @@ def handle_manual_tasks_cleanup(
 
     result: dict[str, Any] = {"removed": removed, "skipped": skipped, "dry_run": dry_run}
     if dry_run:
-        result["message"] = f"Would remove {skipped} artifact(s) from {tasks_dir}. Use --yes to confirm."
+        result["message"] = (
+            f"Would remove {skipped} artifact(s) from {tasks_dir}. Use --yes to confirm."
+        )
     else:
         result["message"] = f"Removed {removed} artifact(s) from {tasks_dir}."
 
